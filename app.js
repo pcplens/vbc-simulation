@@ -300,6 +300,8 @@
             savingsTargetPct: { min: 0.5, max: 10, step: 0.5 },
             payerSharePct: { min: 25, max: 100, step: 5 },
             msrPct: { min: 0, max: 5, step: 0.5 },
+            multiYearSavingsTargetPct: { min: 0.5, max: 10, step: 0.5 },
+            multiYearMsrPct: { min: 0, max: 5, step: 0.5 },
             qualityGatePct: { min: 0, max: 95, step: 5 },
             // Infrastructure (Group 3)
             dataAnalyticsCost: { min: 200000, max: 800000, step: 50000 },
@@ -362,6 +364,9 @@
         };
         const ALL_FUNDER_SPECIFIC_VARIABLES = new Set(Object.values(FUNDER_VARIABLES).flat());
 
+        const YEAR1_EXCLUDED_VARS = new Set(['multiYearSavingsTargetPct', 'multiYearMsrPct']);
+        const MULTI_YEAR_EXCLUDED_VARS = new Set(['savingsTargetPct', 'msrPct']);
+
         function isVariableApplicableForFunding(varName, funding) {
             if (!ALL_FUNDER_SPECIFIC_VARIABLES.has(varName)) return true;
             const activeFunding = funding || selectedFunding || 'bank';
@@ -369,8 +374,13 @@
             return allowedVars.includes(varName);
         }
 
-        function getMonteCarloVariableKeys(funding) {
-            return Object.keys(SLIDER_RANGES).filter(varName => isVariableApplicableForFunding(varName, funding));
+        function getMonteCarloVariableKeys(funding, simulationType) {
+            return Object.keys(SLIDER_RANGES).filter(varName => {
+                if (!isVariableApplicableForFunding(varName, funding)) return false;
+                if (simulationType === 'year1' && YEAR1_EXCLUDED_VARS.has(varName)) return false;
+                if (simulationType === 'multiYear' && MULTI_YEAR_EXCLUDED_VARS.has(varName)) return false;
+                return true;
+            });
         }
 
         // ============================================
@@ -434,6 +444,8 @@
             savingsTargetPct: true,
             payerSharePct: true,
             msrPct: true,
+            multiYearSavingsTargetPct: true,
+            multiYearMsrPct: true,
             benchmarkRatchetPct: true,
             pcpCount: true,
             patientsPerPcp: true,
@@ -977,6 +989,176 @@
             return lockedVolume * (premiumPct / 100);
         }
 
+        // Shared helper: computes one year of ACO financial calculations.
+        // Both computeMultiYear() (Step 5) and computeCascadingYearOutcome() (Step 6 MC) prepare
+        // their own inputs (RAF values, savings rate, infrastructure cost, etc.) then call this
+        // for the shared math. Differences become input parameters rather than code duplication.
+        function computeYearFinancials(params) {
+            const {
+                year, funding,
+                // Pre-computed by caller
+                rafAdjustedBenchmark,
+                qualityPass,
+                savingsPct, isCapped,
+                minAchievableCost,
+                hospitalPremium,
+                infraCost,
+                // Assumptions (passed through)
+                payerSharePct, acoReservePct, multiYearMsrPct,
+                multiYearSavingsTargetPct,
+                // Loan state
+                loanPaymentsRemaining, monthlyLoanPayment,
+                // Partner params
+                hospitalGainSharePct, peEquitySharePct,
+                // Payer params
+                currentPmpm, attributedPatients, payerClawbackPct,
+                // Reserve state
+                currentReserve,
+                // Practice burden
+                basePracticeBurdenTotal, applyInflationToBurden, inflationPct,
+                // Behavior control
+                adjustNetDistributableForShortfall,  // false for Step 5, true for MC
+                isScenarioMiss                       // true when scenario='miss' (Step 5 only)
+            } = params;
+
+            // Max achievable savings (RAF-adjusted benchmark vs cost floor)
+            const maxAchievableSavings = Math.max(0, rafAdjustedBenchmark - minAchievableCost);
+            const maxAchievableSavingsPct = rafAdjustedBenchmark > 0
+                ? (maxAchievableSavings / rafAdjustedBenchmark) * 100 : 0;
+
+            // Target savings and realized savings (after hospital premium)
+            const targetSavings = rafAdjustedBenchmark * (savingsPct / 100);
+            const realizedSavings = targetSavings - hospitalPremium;
+
+            // MSR threshold check
+            const msrThreshold = rafAdjustedBenchmark * (multiYearMsrPct / 100);
+            const meetsThreshold = realizedSavings >= msrThreshold;
+
+            // ACO share: payout only if both TCOC and quality pass
+            const acoShare = (meetsThreshold && qualityPass)
+                ? realizedSavings * (payerSharePct / 100)
+                : 0;
+
+            // Ops retention (capped at ACO share)
+            const opsRetention = Math.min(acoShare, infraCost);
+
+            // Reserve contribution
+            const reserveContribution = acoShare * acoReservePct;
+
+            // Bank: Loan payment (12 months max per year, 0 if term ended)
+            const monthsThisYear = Math.min(12, loanPaymentsRemaining);
+            const loanPayment = monthlyLoanPayment * monthsThisYear;
+            const newLoanPaymentsRemaining = Math.max(0, loanPaymentsRemaining - monthsThisYear);
+
+            // Required obligations and shortfall
+            // Use infraCost (actual costs) not opsRetention (income-capped) so reserve
+            // correctly depletes during miss years when acoShare = 0
+            const required = infraCost + loanPayment;
+            const shortfall = Math.max(0, required - acoShare);
+
+            // Net distributable: Step 5 uses full reserve; MC adjusts for shortfall
+            let netDistributable;
+            if (adjustNetDistributableForShortfall) {
+                netDistributable = Math.max(0, acoShare - opsRetention - Math.max(0, reserveContribution - shortfall));
+            } else {
+                netDistributable = Math.max(0, acoShare - opsRetention - reserveContribution);
+            }
+
+            // Partner gain share / funding deduction (funder-specific)
+            let partnerGainShare = 0;
+            let fundingDeduction = 0;
+            let payerAdvanceAmount = 0;
+            let payerAdvanceDeduction = 0;
+            let payerClawback = 0;
+
+            if (funding === 'bank') {
+                fundingDeduction = loanPayment;
+            } else if (funding === 'hospital' && acoShare > 0) {
+                partnerGainShare = netDistributable * (hospitalGainSharePct / 100);
+                fundingDeduction = partnerGainShare;
+            } else if (funding === 'pe' && acoShare > 0) {
+                partnerGainShare = netDistributable * (peEquitySharePct / 100);
+                fundingDeduction = partnerGainShare;
+            }
+
+            // Payer advance / clawback
+            if (funding === 'payer') {
+                payerAdvanceAmount = currentPmpm * attributedPatients * 12;
+                if (acoShare > 0) {
+                    payerAdvanceDeduction = Math.min(payerAdvanceAmount, acoShare);
+                    fundingDeduction = payerAdvanceDeduction;
+                } else {
+                    // Clawback on miss: Year 1 uses 18 months, Years 2+ use 12 months
+                    const advanceMonths = (year === 1) ? 18 : 12;
+                    const pmpmAdvanceForClawback = currentPmpm * attributedPatients * advanceMonths;
+                    payerClawback = pmpmAdvanceForClawback * (payerClawbackPct / 100);
+                }
+            }
+
+            // Failure check: can the ACO cover obligations?
+            const available = acoShare + currentReserve;
+            const failed = available < required;
+
+            // Reserve change
+            const reserveChange = reserveContribution - shortfall;
+
+            // Ending reserve (caller may override on failure)
+            const endingReserve = currentReserve + reserveChange;
+
+            // Determine TCOC status independently (for Quality View display)
+            let tcocStatus;
+            if (isScenarioMiss || !meetsThreshold) {
+                tcocStatus = 'Miss';
+            } else if (isCapped) {
+                tcocStatus = 'Partial';
+            } else {
+                tcocStatus = 'Hit';
+            }
+
+            // Determine combined status: Hit, Partial, TCOC Miss, Quality Miss, Both Miss
+            let status;
+            if (!meetsThreshold && !qualityPass) {
+                status = 'Both Miss';
+            } else if (!meetsThreshold) {
+                status = 'TCOC Miss';
+            } else if (!qualityPass) {
+                status = 'Quality Miss';
+            } else if (isCapped) {
+                status = 'Partial';
+            } else {
+                status = 'Hit';
+            }
+
+            // Net to PCPs
+            const netToPcps = Math.max(0, acoShare - opsRetention - reserveContribution - fundingDeduction) - payerClawback;
+
+            // Practice burden (Year 1 = 18 months, Years 2+ = 12 months, with optional inflation)
+            const burdenMonths = (year === 1) ? 18 : 12;
+            const burdenInflation = applyInflationToBurden ? inflationMultiplier(inflationPct, year) : 1;
+            const practiceBurden = basePracticeBurdenTotal * burdenInflation * burdenMonths / 12;
+
+            return {
+                // Quality/threshold
+                maxAchievableSavings, maxAchievableSavingsPct,
+                targetSavings, realizedSavings,
+                msrThreshold, meetsThreshold,
+                // Financials
+                acoShare,
+                opsRetention, reserveContribution,
+                loanPayment, monthsThisYear, newLoanPaymentsRemaining,
+                netDistributable, partnerGainShare,
+                payerAdvanceAmount, payerAdvanceDeduction, payerClawback,
+                fundingDeduction,
+                // Failure/reserve
+                required, available, failed,
+                shortfall, reserveChange, endingReserve,
+                // Status
+                tcocStatus, status,
+                // Distribution
+                netToPcps, practiceBurden
+            };
+        }
+
         function computeMultiYear(scenario, baseModel, fundingType) {
             // scenario: 'hit' or 'miss'
             // baseModel: output of computeModel() for Year 1 values
@@ -1053,175 +1235,119 @@
                 // Apply RAF adjustment to benchmark
                 const rafAdjustedBenchmark = benchmark * rafRatio;
 
-                // Calculate maximum achievable savings (RAF-adjusted benchmark vs cost floor)
-                const maxAchievableSavings = Math.max(0, rafAdjustedBenchmark - minAchievableCost);
-                const maxAchievableSavingsPct = rafAdjustedBenchmark > 0 ? (maxAchievableSavings / rafAdjustedBenchmark) * 100 : 0;
-
                 // Savings rate: hit path aims for target but capped by achievable; miss path uses fixed 1%
                 let savingsPct;
                 let isCapped = false;
                 if (scenario === 'hit') {
-                    if (maxAchievableSavingsPct >= a.multiYearSavingsTargetPct) {
-                        savingsPct = a.multiYearSavingsTargetPct;  // Full target achievable
+                    // Pre-compute achievable to determine capping (helper also computes this)
+                    const preMaxSavings = rafAdjustedBenchmark > 0
+                        ? (Math.max(0, rafAdjustedBenchmark - minAchievableCost) / rafAdjustedBenchmark) * 100 : 0;
+                    if (preMaxSavings >= a.multiYearSavingsTargetPct) {
+                        savingsPct = a.multiYearSavingsTargetPct;
                     } else {
-                        savingsPct = maxAchievableSavingsPct;  // Capped by ratchet constraint
+                        savingsPct = preMaxSavings;
                         isCapped = true;
                     }
                 } else {
-                    savingsPct = CONSTANTS.MISS_SCENARIO_SAVINGS_PCT * 100;  // Fixed 1% for miss path
+                    savingsPct = CONSTANTS.MISS_SCENARIO_SAVINGS_PCT * 100;
                 }
-                const targetSavings = rafAdjustedBenchmark * (savingsPct / 100);
 
-                // Hospital premium (grows annually) - uses actual TCOC (benchmark before RAF), matches Year 1
+                // Hospital premium (grows annually) - uses actual TCOC (benchmark before RAF)
                 const hospitalPremium = computeHospitalPremiumForYear(benchmark, year, a, fundingType);
-                const realizedSavings = targetSavings - hospitalPremium;
 
-                // MSR check (quality check done above) - uses RAF-adjusted benchmark
-                const msrThreshold = rafAdjustedBenchmark * (a.multiYearMsrPct / 100);
-                const meetsThreshold = realizedSavings >= msrThreshold;
+                // Infrastructure cost with optional inflation
+                const expenseInflationMultiplier = a.applyInflationToExpenses ? inflationMultiplier(a.inflationPct, year) : 1;
+                const infraCost = baseModel.acoInfrastructureTotal * expenseInflationMultiplier;
+
+                // Delegate shared financial math to helper
+                const yf = computeYearFinancials({
+                    year, funding: fundingType,
+                    rafAdjustedBenchmark,
+                    qualityPass,
+                    savingsPct, isCapped,
+                    minAchievableCost,
+                    hospitalPremium,
+                    infraCost,
+                    payerSharePct: a.payerSharePct,
+                    acoReservePct: a.acoReservePct,
+                    multiYearMsrPct: a.multiYearMsrPct,
+                    multiYearSavingsTargetPct: a.multiYearSavingsTargetPct,
+                    loanPaymentsRemaining,
+                    monthlyLoanPayment,
+                    hospitalGainSharePct: a.hospitalGainShare,
+                    peEquitySharePct: a.peEquityShare,
+                    currentPmpm,
+                    attributedPatients,
+                    payerClawbackPct: a.payerClawbackPct,
+                    currentReserve: reserve,
+                    basePracticeBurdenTotal: baseModel.practiceBurdenPerPcp * a.pcpCount,
+                    applyInflationToBurden: a.applyInflationToBurden,
+                    inflationPct: a.inflationPct,
+                    adjustNetDistributableForShortfall: false,
+                    isScenarioMiss: scenario === 'miss'
+                });
+
+                // Update loan state
+                loanPaymentsRemaining = yf.newLoanPaymentsRemaining;
 
                 // Track first TCOC miss
-                if (!meetsThreshold && !firstTcocMissYear && scenario === 'hit') {
+                if (!yf.meetsThreshold && !firstTcocMissYear && scenario === 'hit') {
                     firstTcocMissYear = year;
                 }
 
-                const acoShare = (meetsThreshold && qualityPass)
-                    ? realizedSavings * (a.payerSharePct / 100)
-                    : 0;
-
-                // Ops retention (infrastructure costs, with optional inflation)
-                const expenseInflationMultiplier = a.applyInflationToExpenses ? inflationMultiplier(a.inflationPct, year) : 1;
-                const opsRetention = Math.min(acoShare, baseModel.acoInfrastructureTotal * expenseInflationMultiplier);
-
-                // Reserve contribution
-                const reserveContribution = acoShare * a.acoReservePct;
-
-                // Bank: Loan payment (12 months max per year, 0 if term ended)
-                const monthsThisYear = Math.min(12, loanPaymentsRemaining);
-                const loanPayment = monthlyLoanPayment * monthsThisYear;
-                loanPaymentsRemaining -= monthsThisYear;
-
-                // Hospital/PE: Partner gain share
-                let partnerGainShare = 0;
-                const netDistributable = Math.max(0, acoShare - opsRetention - reserveContribution);
-                if (fundingType === 'hospital' && acoShare > 0) {
-                    partnerGainShare = netDistributable * (a.hospitalGainShare / 100);
-                } else if (fundingType === 'pe' && acoShare > 0) {
-                    partnerGainShare = netDistributable * (a.peEquityShare / 100);
-                }
-
-                // Payer: PMPM advance deduction (annual advance deducted from share)
-                // Payer is senior - deduction from acoShare directly, matches Year 1 computePayerAdvance
-                let payerAdvanceDeduction = 0;
-                let payerAdvanceAmount = 0;
-                let payerClawback = 0;
-                if (fundingType === 'payer') {
-                    payerAdvanceAmount = currentPmpm * attributedPatients * 12;
-                    if (acoShare > 0) {
-                        payerAdvanceDeduction = Math.min(payerAdvanceAmount, acoShare);
-                    } else {
-                        // Clawback on miss: Year 1 uses 18 months, Years 2+ use 12 months
-                        const advanceMonths = (year === 1) ? 18 : 12;
-                        const pmpmAdvanceForClawback = currentPmpm * attributedPatients * advanceMonths;
-                        payerClawback = pmpmAdvanceForClawback * (a.payerClawbackPct / 100);
-                    }
-                }
-
-                // Failure check: can we cover obligations?
-                // Use actual infraCost (not income-capped opsRetention) so reserve
-                // correctly depletes during miss years when acoShare = 0
-                const required = (baseModel.acoInfrastructureTotal * expenseInflationMultiplier) + loanPayment;
-                const available = acoShare + reserve;
-
-                // Determine TCOC status independently (for Quality View display)
-                let tcocStatus;
-                if (scenario === 'miss' || !meetsThreshold) {
-                    tcocStatus = 'Miss';
-                } else if (isCapped) {
-                    tcocStatus = 'Partial';
-                } else {
-                    tcocStatus = 'Hit';
-                }
-
-                // Determine combined status: Hit, Partial, TCOC Miss, Quality Miss, Both Miss, Failed
-                let status;
-                if (!meetsThreshold && !qualityPass) {
-                    status = 'Both Miss';
-                } else if (!meetsThreshold) {
-                    status = 'TCOC Miss';
-                } else if (!qualityPass) {
-                    status = 'Quality Miss';
-                } else if (isCapped) {
-                    status = 'Partial';
-                } else {
-                    status = 'Hit';
-                }
-                let netToPcps = 0;
-
-                if (available < required) {
-                    status = 'Failed';
+                // Failure handling
+                if (yf.failed) {
                     failedYear = year;
-                    // Reserve fully depleted on failure — ACO ceases operations
                     const failReserveChange = -reserve;
                     reserve = 0;
-                    // Payer clawback applies even on failure year
-                    totalNet -= payerClawback;
-                    // Accumulate failure year's burden before breaking
-                    const failBurdenMonths = (year === 1) ? 18 : 12;
-                    const failBurdenInflation = a.applyInflationToBurden ? inflationMultiplier(a.inflationPct, year) : 1;
-                    const failYearBurden = baseModel.practiceBurdenPerPcp * a.pcpCount * failBurdenInflation * failBurdenMonths / 12;
-                    totalBurden += failYearBurden;
+                    totalNet -= yf.payerClawback;
+                    totalBurden += yf.practiceBurden;
                     rows.push({
                         year, benchmark: rafAdjustedBenchmark, savingsPct, acoShare: 0, opsRetention: 0,
                         reserveChange: failReserveChange, endingReserve: reserve,
-                        loanPayment, partnerGainShare: 0, payerClawback, netToPcps: -payerClawback, status,
+                        loanPayment: yf.loanPayment, partnerGainShare: 0, payerClawback: yf.payerClawback,
+                        netToPcps: -yf.payerClawback, status: 'Failed',
                         // Quality fields
                         qualityGateRequired, achievedQuality, qualityPass, qualityMargin,
-                        tcocStatus, atQualityCeiling,
+                        tcocStatus: yf.tcocStatus, atQualityCeiling,
                         // RAF fields
                         acoRaf, regionalRaf, rafRatio, isBelowMarket
                     });
                     break;
                 }
 
-                // Count miss/payout years only after confirming no failure override
-                if (status === 'Both Miss') { yearsTcocFailed++; yearsQualityFailed++; }
-                else if (status === 'TCOC Miss') { yearsTcocFailed++; }
-                else if (status === 'Quality Miss') { yearsQualityFailed++; }
-                else if (status === 'Hit' || status === 'Partial') { yearsWithPayout++; }
+                // Count miss/payout years only after confirming no failure
+                if (yf.status === 'Both Miss') { yearsTcocFailed++; yearsQualityFailed++; }
+                else if (yf.status === 'TCOC Miss') { yearsTcocFailed++; }
+                else if (yf.status === 'Quality Miss') { yearsQualityFailed++; }
+                else if (yf.status === 'Hit' || yf.status === 'Partial') { yearsWithPayout++; }
 
-                // Calculate distributions
-                const shortfall = Math.max(0, required - acoShare);
-                reserve = reserve + reserveContribution - shortfall;
-                netToPcps = Math.max(0, acoShare - opsRetention - reserveContribution - loanPayment - partnerGainShare - payerAdvanceDeduction) - payerClawback;
+                // Update reserve state
+                reserve = yf.endingReserve;
 
-                totalNet += netToPcps;
-
-                // Accumulate practice burden year-by-year (Year 1 = 18 months, Years 2+ = 12 months)
-                const burdenMonths = (year === 1) ? 18 : 12;
-                const burdenInflationMultiplier = a.applyInflationToBurden ? inflationMultiplier(a.inflationPct, year) : 1;
-                const yearBurden = baseModel.practiceBurdenPerPcp * a.pcpCount * burdenInflationMultiplier * burdenMonths / 12;
-                totalBurden += yearBurden;
+                totalNet += yf.netToPcps;
+                totalBurden += yf.practiceBurden;
 
                 rows.push({
-                    year, benchmark: rafAdjustedBenchmark, savingsPct, acoShare, opsRetention,
-                    reserveChange: reserveContribution - shortfall,
-                    endingReserve: reserve,
-                    loanPayment,          // Bank only (0 for Hospital/PE)
-                    partnerGainShare,     // Hospital/PE only (0 for Bank)
-                    payerAdvanceDeduction, // Payer only (0 for Bank/Hospital/PE)
-                    payerAdvanceAmount,    // Payer only - PMPM advance received
-                    payerClawback,        // Payer only - clawback on miss years
-                    netToPcps, status,
+                    year, benchmark: rafAdjustedBenchmark, savingsPct,
+                    acoShare: yf.acoShare, opsRetention: yf.opsRetention,
+                    reserveChange: yf.reserveChange,
+                    endingReserve: yf.endingReserve,
+                    loanPayment: yf.loanPayment,
+                    partnerGainShare: yf.partnerGainShare,
+                    payerAdvanceDeduction: yf.payerAdvanceDeduction,
+                    payerAdvanceAmount: yf.payerAdvanceAmount,
+                    payerClawback: yf.payerClawback,
+                    netToPcps: yf.netToPcps, status: yf.status,
                     // Quality fields
                     qualityGateRequired, achievedQuality, qualityPass, qualityMargin,
-                    tcocStatus, atQualityCeiling,
+                    tcocStatus: yf.tcocStatus, atQualityCeiling,
                     // RAF fields
                     acoRaf, regionalRaf, rafRatio, isBelowMarket
                 });
 
                 // Ratchet applies only when current year actually had payout (Hit or Partial)
-                if (status === 'Hit' || status === 'Partial') {
+                if (yf.status === 'Hit' || yf.status === 'Partial') {
                     let ratchetBase = benchmark;
                     // Only apply ratchet inflation if benchmark inflation isn't already active
                     // (otherwise benchmark was already inflated at the top of the loop)
@@ -1337,7 +1463,7 @@
 
             // For each variable that should be varied
             let dimIndex = 0;
-            getMonteCarloVariableKeys(funding).forEach(varName => {
+            getMonteCarloVariableKeys(funding, config.simulationType).forEach(varName => {
                 const isHeld = monteCarloState.holdConstant[varName];
                 const isVarying = monteCarloState.varyEnabled[varName];
 
@@ -1602,7 +1728,7 @@
             let sensitivities = [];
 
             // For each variable that is being varied
-            getMonteCarloVariableKeys(funding).forEach(varName => {
+            getMonteCarloVariableKeys(funding, 'year1').forEach(varName => {
                 const isHeld = monteCarloState.holdConstant[varName];
                 const isVarying = monteCarloState.varyEnabled[varName];
 
@@ -1657,6 +1783,8 @@
                 savingsTargetPct: 'Target Savings %',
                 payerSharePct: 'ACO Share of Savings %',
                 msrPct: 'MSR %',
+                multiYearSavingsTargetPct: 'Multi-Year Target Savings %',
+                multiYearMsrPct: 'Multi-Year MSR %',
                 qualityGatePct: 'Quality Gate Required %',
                 dataAnalyticsCost: 'Data Analytics',
                 careManagerRatio: 'Care Manager Ratio',
@@ -1814,6 +1942,14 @@
                     lower: 'Less total savings if target achieved',
                     higher: 'More savings dollars if target achieved'
                 },
+                multiYearSavingsTargetPct: {
+                    lower: 'Lower annual target = less savings each year over projection',
+                    higher: 'Higher annual target = more savings potential but harder to sustain'
+                },
+                multiYearMsrPct: {
+                    lower: 'Easier threshold to achieve payout each year',
+                    higher: 'Harder to exceed MSR annually, more miss years likely'
+                },
                 payerSharePct: {
                     lower: 'ACO keeps less of savings',
                     higher: 'ACO keeps more of total savings'
@@ -1912,7 +2048,8 @@
                 basePreset: monteCarloState.basePreset,
                 variationPct: monteCarloState.variationPct,
                 iterations: monteCarloState.iterations,
-                funding: selectedFunding || 'bank'
+                funding: selectedFunding || 'bank',
+                simulationType: 'year1'
             };
 
             try {
@@ -2294,7 +2431,7 @@
                 return formatCurrency(value);
             }
             // Percentage variables
-            if (['attributionPct', 'savingsTargetPct', 'payerSharePct', 'msrPct', 'qualityGatePct',
+            if (['attributionPct', 'savingsTargetPct', 'payerSharePct', 'msrPct', 'multiYearSavingsTargetPct', 'multiYearMsrPct', 'qualityGatePct',
                  'acoStartingQualityPct', 'acoQualityImprovementPct', 'qualityGateRatchetPct', 'acoMaxQualityPct', 'qualityGateCeiling',
                  'bankInterestRate', 'bankOrigFee', 'hospitalReferralLock',
                  'hospitalCostPremium', 'hospitalGainShare', 'hospitalReferralPct',
@@ -2619,12 +2756,12 @@
             // Cost floor and achievable savings
             const originalTcoc = attributedPatients * tcocPerPatient;
             const minAchievableCost = originalTcoc * (1 - a.multiYearSavingsTargetPct / 100);
-            const maxAchievableSavings = Math.max(0, rafAdjustedBenchmark - minAchievableCost);
-            const maxAchievableSavingsPct = rafAdjustedBenchmark > 0 ? (maxAchievableSavings / rafAdjustedBenchmark) * 100 : 0;
 
-            // Calculate target savings (capped by achievable)
-            let savingsPct = Math.min(a.multiYearSavingsTargetPct, maxAchievableSavingsPct);
-            const targetSavings = rafAdjustedBenchmark * (savingsPct / 100);
+            // Pre-compute achievable to determine capping (helper also computes this)
+            const preMaxSavings = rafAdjustedBenchmark > 0
+                ? (Math.max(0, rafAdjustedBenchmark - minAchievableCost) / rafAdjustedBenchmark) * 100 : 0;
+            const savingsPct = Math.min(a.multiYearSavingsTargetPct, preMaxSavings);
+            const isCapped = savingsPct < a.multiYearSavingsTargetPct;
 
             // Hospital premium (if applicable)
             // Note: Premium is based on actual TCOC (benchmark), not RAF-adjusted benchmark,
@@ -2635,24 +2772,6 @@
                 const inflatedPremiumPct = a.hospitalCostPremium * hospitalGrowthFactor;
                 hospitalPremium = benchmark * (a.hospitalReferralPct / 100) *
                                   (a.hospitalReferralLock / 100) * (inflatedPremiumPct / 100);
-            }
-            const realizedSavings = targetSavings - hospitalPremium;
-
-            // MSR check
-            const msrThreshold = rafAdjustedBenchmark * (a.multiYearMsrPct / 100);
-            const meetsThreshold = realizedSavings >= msrThreshold;
-
-            // Determine status
-            let status, acoShare = 0;
-            if (meetsThreshold && qualityPass) {
-                acoShare = realizedSavings * (a.payerSharePct / 100);
-                status = savingsPct >= a.multiYearSavingsTargetPct ? 'Hit' : 'Partial';
-            } else if (!meetsThreshold && !qualityPass) {
-                status = 'Both Miss';
-            } else if (!meetsThreshold) {
-                status = 'TCOC Miss';
-            } else {
-                status = 'Quality Miss';
             }
 
             // Infrastructure costs (with overrides and inflation applied)
@@ -2666,74 +2785,46 @@
 
             const infraCost = baseInfraCost * expenseInflationMultiplier;
 
-            // Retention
-            const acoOpsRetention = Math.min(acoShare, infraCost);
-
-            // Calculate loanPayment FIRST (needed for shortfall calculation)
-            // Use pre-calculated monthly payment from initializePathState (Year 1 infrastructure)
-            let loanPayment = 0;
-            if (funding === 'bank' && state.loanPaymentsRemaining > 0) {
-                const paymentsThisYear = Math.min(12, state.loanPaymentsRemaining);
-                loanPayment = state.bankDeferredMonthlyPayment * paymentsThisYear;
-            }
-
-            // Reserve change with shortfall depletion (matches deterministic logic)
-            // Use infraCost (actual operational costs) not acoOpsRetention (income-capped)
-            // so reserve correctly depletes during miss years when acoShare = 0
-            const required = infraCost + loanPayment;
-            const shortfall = Math.max(0, required - acoShare);
-            const reserveContribution = acoShare * a.acoReservePct;
-            const acoReserveChange = Math.max(-state.reserve, reserveContribution - shortfall);
-
-            // Funding-specific deductions (match deterministic logic: only deduct when acoShare > 0)
-            // Use netDistributable as base (positive reserve contributions only, not reserve depletion)
-            const netDistributable = Math.max(0, acoShare - acoOpsRetention - Math.max(0, reserveContribution - shortfall));
-            let fundingDeduction = 0;
-            if (funding === 'bank') {
-                fundingDeduction = loanPayment;
-            } else if (funding === 'payer' && acoShare > 0) {
-                const pmpmAdvance = state.pmpm * attributedPatients * 12;
-                fundingDeduction = Math.min(pmpmAdvance, acoShare);
-            }
-
-            // Payer clawback when target is missed (acoShare === 0)
-            // Year 1 uses 18 months, subsequent years use 12 months
-            let payerClawback = 0;
-            if (funding === 'payer' && acoShare === 0) {
-                const advanceMonths = (year === 1) ? 18 : 12;
-                const pmpmAdvanceForClawback = state.pmpm * attributedPatients * advanceMonths;
-                payerClawback = pmpmAdvanceForClawback * (a.payerClawbackPct / 100);
-            }
-
-            if (funding === 'hospital' && acoShare > 0) {
-                const gainSharePct = a.hospitalGainShare / 100;
-                fundingDeduction = netDistributable * gainSharePct;
-            } else if (funding === 'pe' && acoShare > 0) {
-                const peSharePct = a.peEquityShare / 100;
-                fundingDeduction = netDistributable * peSharePct;
-            }
-
-            // Net to PCPs (matches deterministic: always deduct full reserveContribution, subtract payerClawback)
-            const netToPcps = Math.max(0, acoShare - acoOpsRetention - reserveContribution - fundingDeduction) - payerClawback;
-
-            // Bug #9 fix: Practice burden with 18-month Year 1 and inflation (match deterministic)
+            // Practice burden (recomputed with shock overrides)
             const basePracticeBurden = computePracticeBurden(a).totalPracticeBurden;
-            const burdenMonths = (year === 1) ? 18 : 12;
-            const burdenInflationMultiplier = a.applyInflationToBurden ?
-                inflationMultiplier(a.inflationPct, year) : 1;
-            const practiceBurden = basePracticeBurden * burdenInflationMultiplier * burdenMonths / 12;
 
-            // Failure when available resources can't cover mandatory obligations
-            const available = acoShare + state.reserve;
-            const failed = available < required;
+            // Delegate shared financial math to helper
+            const yf = computeYearFinancials({
+                year, funding,
+                rafAdjustedBenchmark,
+                qualityPass,
+                savingsPct, isCapped,
+                minAchievableCost,
+                hospitalPremium,
+                infraCost,
+                payerSharePct: a.payerSharePct,
+                acoReservePct: a.acoReservePct,
+                multiYearMsrPct: a.multiYearMsrPct,
+                multiYearSavingsTargetPct: a.multiYearSavingsTargetPct,
+                loanPaymentsRemaining: state.loanPaymentsRemaining,
+                monthlyLoanPayment: (funding === 'bank') ? state.bankDeferredMonthlyPayment : 0,
+                hospitalGainSharePct: a.hospitalGainShare,
+                peEquitySharePct: a.peEquityShare,
+                currentPmpm: state.pmpm,
+                attributedPatients,
+                payerClawbackPct: a.payerClawbackPct,
+                currentReserve: state.reserve,
+                basePracticeBurdenTotal: basePracticeBurden,
+                applyInflationToBurden: a.applyInflationToBurden,
+                inflationPct: a.inflationPct,
+                adjustNetDistributableForShortfall: true,
+                isScenarioMiss: false
+            });
+
+            // Cap reserve change at available reserve (MC-specific)
+            const acoReserveChange = Math.max(-state.reserve, yf.reserveChange);
 
             // On failure: set status to 'Failed' and zero out distributions
-            const finalStatus = failed ? 'Failed' : status;
-            const finalNetToPcps = failed ? -payerClawback : netToPcps;
-            const finalAcoShare = failed ? 0 : acoShare;
-            const finalFundingDeduction = failed ? 0 : fundingDeduction;
-            const finalPayerClawback = payerClawback;
-            const finalReserveChange = failed ? -state.reserve : acoReserveChange;
+            const finalStatus = yf.failed ? 'Failed' : yf.status;
+            const finalNetToPcps = yf.failed ? -yf.payerClawback : yf.netToPcps;
+            const finalAcoShare = yf.failed ? 0 : yf.acoShare;
+            const finalFundingDeduction = yf.failed ? 0 : yf.fundingDeduction;
+            const finalReserveChange = yf.failed ? -state.reserve : acoReserveChange;
 
             return {
                 benchmark: benchmark,
@@ -2745,20 +2836,20 @@
                 achievedQuality,
                 qualityPass,
                 savingsPct,
-                realizedSavings,
-                msrThreshold,
-                meetsThreshold,
+                realizedSavings: yf.realizedSavings,
+                msrThreshold: yf.msrThreshold,
+                meetsThreshold: yf.meetsThreshold,
                 acoShare: finalAcoShare,
-                acoOpsRetention,
+                acoOpsRetention: yf.opsRetention,
                 acoReserveChange: finalReserveChange,
                 fundingDeduction: finalFundingDeduction,
-                loanPayment,
+                loanPayment: yf.loanPayment,
                 netToPcps: finalNetToPcps,
-                practiceBurden,
-                payerClawback: finalPayerClawback,
+                practiceBurden: yf.practiceBurden,
+                payerClawback: yf.payerClawback,
                 status: finalStatus,
-                failed,
-                loanPaymentsRemaining: Math.max(0, state.loanPaymentsRemaining - 12)
+                failed: yf.failed,
+                loanPaymentsRemaining: yf.newLoanPaymentsRemaining
             };
         }
 
@@ -2871,7 +2962,7 @@
             let sensitivities = [];
 
             // For each variable that is being varied
-            getMonteCarloVariableKeys(funding).forEach(varName => {
+            getMonteCarloVariableKeys(funding, 'multiYear').forEach(varName => {
                 const isHeld = monteCarloState.holdConstant[varName];
                 const isVarying = monteCarloState.varyEnabled[varName];
 
@@ -2963,7 +3054,7 @@
 
             let correlations = [];
 
-            getMonteCarloVariableKeys(funding).forEach(varName => {
+            getMonteCarloVariableKeys(funding, 'year1').forEach(varName => {
                 const isHeld = monteCarloState.holdConstant[varName];
                 const isVarying = monteCarloState.varyEnabled[varName];
 
@@ -3008,7 +3099,7 @@
             let correlations = [];
 
             // For each varied variable, extract initial sampled values
-            getMonteCarloVariableKeys(funding).forEach(varName => {
+            getMonteCarloVariableKeys(funding, 'multiYear').forEach(varName => {
                 const isHeld = monteCarloState.holdConstant[varName];
                 const isVarying = monteCarloState.varyEnabled[varName];
 
@@ -3197,7 +3288,7 @@
                 let variedDimCount = 0;
                 if (useQMC) {
                     const baseAssumptions = PRESETS[monteCarloState.basePreset];
-                    getMonteCarloVariableKeys(funding).forEach(varName => {
+                    getMonteCarloVariableKeys(funding, 'multiYear').forEach(varName => {
                         if (!monteCarloState.holdConstant[varName] && monteCarloState.varyEnabled[varName] && baseAssumptions[varName] !== undefined) {
                             variedDimCount++;
                         }
@@ -3222,7 +3313,8 @@
                         varyEnabled: monteCarloState.varyEnabled,
                         customConstants: monteCarloState.customConstants,
                         funding: funding,
-                        sobolValues: sobolValues
+                        sobolValues: sobolValues,
+                        simulationType: 'multiYear'
                     });
 
                     let state = initializePathState(initialAssumptions, funding);
@@ -3282,6 +3374,8 @@
                         await new Promise(r => setTimeout(r, 0));
                     }
                 }
+
+                if (progressFill) progressFill.style.width = '100%';
 
                 monteCarloState.paths = paths;
                 monteCarloState.results = analyzeMultiYearPaths(paths, years, currentMultiYearMonteCarloView);
@@ -3780,7 +3874,6 @@
 
                 ['hit', 'partial', 'tcocMiss', 'qualityMiss', 'bothMiss', 'failed', 'cumulativeExited'].forEach(status => {
                     const val = parseFloat(row[status]);
-                    const opacity = Math.min(1, val / 50);  // Scale opacity
                     const colors = statusColors[status];
                     const bgColor = val > 5 ? colors.bg : 'transparent';
                     const textColor = val > 5 ? colors.text : '#94a3b8';
@@ -5030,6 +5123,22 @@
             } else {
                 assumptions[key] = parseFloat(value);
             }
+
+            // One-way live sync: Step 1 contract params push to Step 5
+            if (key === 'savingsTargetPct') {
+                assumptions.multiYearSavingsTargetPct = assumptions.savingsTargetPct;
+                const slider = document.getElementById('multiYearSavingsTargetPct');
+                if (slider) slider.value = assumptions.multiYearSavingsTargetPct;
+                const display = document.getElementById('multiYearSavingsTargetPctDisplay');
+                if (display) display.textContent = assumptions.multiYearSavingsTargetPct.toFixed(1);
+            } else if (key === 'msrPct') {
+                assumptions.multiYearMsrPct = assumptions.msrPct;
+                const slider = document.getElementById('multiYearMsrPct');
+                if (slider) slider.value = assumptions.multiYearMsrPct;
+                const display = document.getElementById('multiYearMsrPctDisplay');
+                if (display) display.textContent = assumptions.multiYearMsrPct.toFixed(1);
+            }
+
             activePreset = null;
             document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
             updateAllDisplays();

@@ -108,7 +108,7 @@ This simulation models **Medicare Advantage and Commercial ACO** dynamics, not M
 - **Benchmark Ratcheting:** Each successful year, payers reduce next year's benchmark
 - **Status:** Hit (full target) | Partial (above MSR but below target) | Miss ($0 payout) | Failed (can't cover obligations)
 - **Default projection:** 10 years (all presets use `multiYearCount: 10`)
-- Step 5 has independent sliders for Target Savings %, MSR, and payer-specific parameters; these sync bidirectionally with earlier steps
+- Step 1 changes to Target Savings % and MSR % push one-way to Step 5 (live sync), but Step 5 slider changes remain independent
 
 ## Monte Carlo Analysis (Step 6)
 

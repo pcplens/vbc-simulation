@@ -3357,6 +3357,38 @@
                                         </div>
                                     </div>
                                     <div class="mc-variable-row">
+                                        <input type="checkbox" class="mc-variable-checkbox" id="mcVarMultiYearSavingsTargetPct" checked onchange="toggleMcVariable('multiYearSavingsTargetPct', this.checked)">
+                                        <div class="mc-variable-label">
+                                            <span class="tooltip-container">
+                                                Multi-Year Target Savings %
+                                                <span class="tooltip-icon">i</span>
+                                                <span class="tooltip-text">Target savings % used in multi-year projections (Step 6). Synced from Step 1 by default.</span>
+                                            </span>
+                                        </div>
+                                        <span class="mc-variable-badge" id="mcBadgeMultiYearSavingsTargetPct">Randomized</span>
+                                        <div class="mc-slider-container" id="mcSliderMultiYearSavingsTargetPct">
+                                            <input type="range" oninput="updateMcVariableConstant('multiYearSavingsTargetPct', this.value)">
+                                            <div class="mc-slider-value" id="mcValueMultiYearSavingsTargetPct">5%</div>
+                                            <button class="mc-slider-reset" onclick="resetMcVariableToPreset('multiYearSavingsTargetPct')" title="Reset to preset">&#8634;</button>
+                                        </div>
+                                    </div>
+                                    <div class="mc-variable-row">
+                                        <input type="checkbox" class="mc-variable-checkbox" id="mcVarMultiYearMsrPct" checked onchange="toggleMcVariable('multiYearMsrPct', this.checked)">
+                                        <div class="mc-variable-label">
+                                            <span class="tooltip-container">
+                                                Multi-Year MSR %
+                                                <span class="tooltip-icon">i</span>
+                                                <span class="tooltip-text">MSR threshold used in multi-year projections (Step 6). Synced from Step 1 by default.</span>
+                                            </span>
+                                        </div>
+                                        <span class="mc-variable-badge" id="mcBadgeMultiYearMsrPct">Randomized</span>
+                                        <div class="mc-slider-container" id="mcSliderMultiYearMsrPct">
+                                            <input type="range" oninput="updateMcVariableConstant('multiYearMsrPct', this.value)">
+                                            <div class="mc-slider-value" id="mcValueMultiYearMsrPct">2%</div>
+                                            <button class="mc-slider-reset" onclick="resetMcVariableToPreset('multiYearMsrPct')" title="Reset to preset">&#8634;</button>
+                                        </div>
+                                    </div>
+                                    <div class="mc-variable-row">
                                         <input type="checkbox" class="mc-variable-checkbox" id="mcVarBenchmarkRatchetPct" checked onchange="toggleMcVariable('benchmarkRatchetPct', this.checked)">
                                         <div class="mc-variable-label">
                                             <span class="tooltip-container">
