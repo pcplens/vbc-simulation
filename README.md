@@ -2,7 +2,7 @@
 
 Interactive simulation exploring ACO financial trade-offs under value-based care contracts.
 
-**[Live Demo](https://pcplens.github.io/vbc-simulation/)**
+**[Live Demo](https://vbcsim.pcplens.com/)**
 
 ## What It Covers
 
