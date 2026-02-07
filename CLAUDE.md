@@ -8,9 +8,9 @@ Educational simulation for ACO financial trade-offs. No build tools or dependenc
 
 | File | Contents |
 |------|----------|
-| `index.html` | HTML markup (~4,100 lines) |
-| `styles.css` | All CSS (~2,330 lines) |
-| `app.js` | All JavaScript (~6,220 lines) |
+| `index.html` | HTML markup (~4,140 lines) |
+| `styles.css` | All CSS (~2,320 lines) |
+| `app.js` | All JavaScript (~6,490 lines) |
 | `logo.png` | PCP Lens header logo |
 
 **Note:** Some browsers block external script/CSS loading from `file://`. Use a local server for testing: `python3 -m http.server` then open `http://localhost:8000`.
@@ -26,7 +26,7 @@ HTML markup in `index.html`, styles in `styles.css`, all JavaScript in `app.js`.
 - **Data layer:** `CONSTANTS`, `PRESETS` (worst/realistic/best), `SLIDER_RANGES`, `FUNDER_VARIABLES`, `DOM_BINDINGS` (~210 entries)
 - **Compute pipeline:** `computeModel(options)` orchestrates `computeCore()` → `computeInfrastructure()` → `computePracticeBurden()` → funder helpers (`computeBankLoan`, `computeHospital`, `computePayerAdvance`, `computePE`) → `computeRafAdjustment()` → `computeMultiYear()`
 - **Display:** `updateAllDisplays()` loops `DOM_BINDINGS` + complex conditional logic; `updateSliderValues()` syncs slider thumbs (includes mapped sliders where element ID differs from assumption key)
-- **Monte Carlo:** Year 1 (`runMonteCarloSimulation`) and Multi-Year (`runCascadingMonteCarlo`) with Sobol QMC, tornado charts (deterministic + Spearman correlation), funder-filtered variable keys via `getMonteCarloVariableKeys(funding)`
+- **Monte Carlo:** Year 1 (`runMonteCarloSimulation`) and Multi-Year (`runCascadingMonteCarlo`), both with Sobol QMC for better convergence; tornado charts (deterministic + Spearman correlation), funder-filtered variable keys via `getMonteCarloVariableKeys(funding)`
 
 ### Reactive Model
 - Single `assumptions` object holds all input parameters (~50 sliders including RAF and quality)
@@ -112,7 +112,7 @@ This simulation models **Medicare Advantage and Commercial ACO** dynamics, not M
 
 ## Monte Carlo Analysis (Step 6)
 
-Year 1 MC: 1000 iterations sampling varied parameters, producing histograms + tornado charts. Multi-Year MC: samples initial parameters once per iteration, then runs deterministic cascading path (benchmark ratchet, reserve dynamics, RAF growth, quality gate ratchet). Multi-Year uses Sobol QMC for better convergence. Both simulations use funder-filtered variable keys (`getMonteCarloVariableKeys`). Tornado charts offer deterministic (one-at-a-time sweep) and Spearman correlation tabs, both computed upfront for instant switching.
+Year 1 MC: 1000 iterations sampling varied parameters, producing histograms + tornado charts. Multi-Year MC: samples initial parameters once per iteration, then runs deterministic cascading path (benchmark ratchet, reserve dynamics, RAF growth, quality gate ratchet). Both Year 1 and Multi-Year use Sobol QMC for better convergence. Both simulations use funder-filtered variable keys (`getMonteCarloVariableKeys`). Tornado charts offer deterministic (one-at-a-time sweep) and Spearman correlation tabs, both computed upfront for instant switching.
 
 ## Visual & Layout Rules
 
@@ -139,7 +139,7 @@ All monetary negative signs use Unicode minus `−` (U+2212), not hyphen-minus `
 ```bash
 python3 -m http.server  # Required — file:// may block external scripts
 # Open http://localhost:8000 in browser, then in console:
-runTests()        # 165 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
+runTests()        # 317 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
 captureBaseline() # After intentional calculation changes
 ```
 
@@ -173,7 +173,7 @@ captureBaseline() # After intentional calculation changes
 
 7. **`payerSharePct` naming** — despite name, represents ACO's share (60 = ACO gets 60%, payer keeps 40%)
 
-8. **Miss scenario** — fixed at 1% savings (`CONSTANTS.MISS_SCENARIO_SAVINGS_PCT`)
+8. **Miss scenario** — fixed at 1% savings (`CONSTANTS.MISS_SCENARIO_SAVINGS_PCT`). `computeMultiYear` only supports the `'hit'` scenario path; the miss branch was removed.
 
 9. **Payer clawback splits evenly** — clawback amount divided equally among all PCPs regardless of panel size
 
