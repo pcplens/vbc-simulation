@@ -364,6 +364,23 @@
         };
         const ALL_FUNDER_SPECIFIC_VARIABLES = new Set(Object.values(FUNDER_VARIABLES).flat());
 
+        const MC_FUNDER_TOOLTIPS = {
+            bankInterestRate: 'Annual interest rate on the bank loan. Interest capitalizes during the 18-month deferral period before payments begin.',
+            bankTermMonths: 'Repayment period for the bank loan after the 18-month deferral. Longer terms mean lower monthly payments but more total interest.',
+            bankOrigFee: 'One-time fee charged by the lender at loan origination, typically 1-3% of loan amount.',
+            hospitalGainShare: 'Percentage of ACO shared savings paid to the hospital as their return on investment.',
+            hospitalReferralLock: 'Percentage of referrals the ACO must send to hospital facilities. Higher lock-in means less flexibility to use lower-cost providers.',
+            hospitalCostPremium: 'How much more hospital-based facilities charge compared to independent providers for the same service.',
+            hospitalReferralPct: 'What percentage of total healthcare spending goes to specialist referrals, imaging, and procedures. Typically 25-35% of TCOC.',
+            hospitalPremiumGrowthPct: 'Annual growth rate of hospital premium costs. Higher growth means the hospital cost premium compounds more each year, reducing realized savings.',
+            peEquityShare: 'Percentage of ACO net distributable savings paid to the PE firm based on their equity ownership.',
+            peBoardControl: 'Percentage of ACO board seats controlled by the PE firm. Higher control = less physician autonomy in ACO governance.',
+            peExitYears: 'Target number of years before the PE firm seeks to exit the investment, typically through sale or IPO.',
+            payerPmpm: 'Monthly per-member-per-month payment from payer during operations. Higher PMPM means more upfront cash but larger deduction from ACO share.',
+            payerClawbackPct: 'Percentage of advance the payer reclaims if ACO misses targets. 100% means full clawback; lower percentages mean the payer absorbs some loss.',
+            payerPmpmRatchet: 'Percentage by which PMPM is reduced each year during contract renewals. 100% ratchet means PMPM drops to $0 after Year 1.'
+        };
+
         const YEAR1_EXCLUDED_VARS = new Set(['multiYearSavingsTargetPct', 'multiYearMsrPct', 'hospitalPremiumGrowthPct']);
         const MULTI_YEAR_EXCLUDED_VARS = new Set(['savingsTargetPct', 'msrPct']);
 
@@ -1828,6 +1845,7 @@
                 hospitalCostPremium: 'Cost Premium',
                 hospitalGainShare: 'Gain Share',
                 hospitalReferralPct: 'Referral %',
+                hospitalPremiumGrowthPct: 'Premium Growth',
                 peEquityShare: 'PE Share',
                 peBoardControl: 'Board Control',
                 peExitYears: 'Exit Years',
@@ -1940,6 +1958,10 @@
                 hospitalReferralPct: {
                     lower: 'Less TCOC goes to referrals at premium',
                     higher: 'More TCOC subject to hospital premium'
+                },
+                hospitalPremiumGrowthPct: {
+                    lower: 'Slower premium growth preserves more realized savings over time',
+                    higher: 'Faster premium growth compounds hospital costs, eroding savings'
                 },
                 peEquityShare: {
                     lower: 'PE takes smaller cut',
@@ -2457,7 +2479,7 @@
             if (['attributionPct', 'savingsTargetPct', 'payerSharePct', 'msrPct', 'multiYearSavingsTargetPct', 'multiYearMsrPct', 'qualityGatePct',
                  'acoStartingQualityPct', 'acoQualityImprovementPct', 'qualityGateRatchetPct', 'acoMaxQualityPct', 'qualityGateCeiling',
                  'bankInterestRate', 'bankOrigFee', 'hospitalReferralLock',
-                 'hospitalCostPremium', 'hospitalGainShare', 'hospitalReferralPct',
+                 'hospitalCostPremium', 'hospitalGainShare', 'hospitalReferralPct', 'hospitalPremiumGrowthPct',
                  'peEquityShare', 'peBoardControl', 'payerClawbackPct',
                  'payerPmpmRatchet', 'inflationPct', 'benchmarkRatchetPct'].includes(varName)) {
                 return value + '%';
@@ -2483,6 +2505,49 @@
             if (varName === 'rafOptimizationPeakYear') return 'Year ' + Math.round(value);
             // Default
             return value.toString();
+        }
+
+        // Generate funder-specific MC controls dynamically from FUNDER_VARIABLES
+        function generateFunderMcControls() {
+            const funderContainerIds = {
+                bank: 'mcBankVars',
+                hospital: 'mcHospitalVars',
+                pe: 'mcPeVars',
+                payer: 'mcPayerVars'
+            };
+            const presetValues = PRESETS.realistic;
+
+            for (const [funderKey, varNames] of Object.entries(FUNDER_VARIABLES)) {
+                const container = document.getElementById(funderContainerIds[funderKey]);
+                if (!container) continue;
+                container.innerHTML = '';
+
+                for (const varName of varNames) {
+                    const capName = capitalizeFirst(varName);
+                    const label = getVariableLabel(varName);
+                    const tooltip = MC_FUNDER_TOOLTIPS[varName] || '';
+                    const defaultValue = presetValues[varName];
+                    const displayValue = formatMcVariableValue(varName, defaultValue);
+                    const isRandomized = !DEFAULT_HOLD_CONSTANT[varName];
+
+                    const row = document.createElement('div');
+                    row.className = 'mc-variable-row';
+                    row.innerHTML =
+                        '<input type="checkbox" class="mc-variable-checkbox" id="mcVar' + capName + '" onchange="toggleMcVariable(\'' + varName + '\', this.checked)">' +
+                        '<div class="mc-variable-label"><span class="tooltip-container">' + label +
+                            '<span class="tooltip-icon" tabindex="0" role="button">i</span>' +
+                            '<span class="tooltip-text">' + tooltip + '</span>' +
+                        '</span></div>' +
+                        '<span class="mc-variable-badge" id="mcBadge' + capName + '">' + (isRandomized ? 'Randomized' : 'Constant') + '</span>' +
+                        '<div class="mc-slider-container" id="mcSlider' + capName + '">' +
+                            '<input type="range" oninput="updateMcVariableConstant(\'' + varName + '\', this.value)">' +
+                            '<div class="mc-slider-value" id="mcValue' + capName + '">' + displayValue + '</div>' +
+                            '<button class="mc-slider-reset" onclick="resetMcVariableToPreset(\'' + varName + '\')" title="Reset to preset">&#8634;</button>' +
+                        '</div>';
+
+                    container.appendChild(row);
+                }
+            }
         }
 
         // Get slider container element (sliders are now embedded in HTML)
@@ -5510,6 +5575,9 @@
 
         // Prevent clicks inside funding params from triggering card selection
         document.addEventListener('DOMContentLoaded', function() {
+            // Generate funder MC controls before tooltip setup
+            generateFunderMcControls();
+
             document.querySelectorAll('.funding-params').forEach(params => {
                 params.addEventListener('click', (e) => e.stopPropagation());
             });
