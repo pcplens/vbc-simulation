@@ -4,7 +4,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Single-file educational simulation for ACO financial trade-offs. File: `index.html` (~11000 lines, ~1MB with embedded logo). No build tools or dependencies.
+Educational simulation for ACO financial trade-offs. No build tools or dependencies. Serve via any static HTTP server (e.g., `python3 -m http.server`).
+
+| File | Contents |
+|------|----------|
+| `index.html` | HTML markup (~4,100 lines) |
+| `styles.css` | All CSS (~2,330 lines) |
+| `app.js` | All JavaScript (~6,220 lines) |
+| `logo.png` | PCP Lens header logo |
+
+**Note:** Some browsers block external script/CSS loading from `file://`. Use a local server for testing: `python3 -m http.server` then open `http://localhost:8000`.
 
 **Author:** Sudeep Bansal, MD, MS | **Website:** www.PCPLens.com
 
@@ -12,7 +21,7 @@ Single-file educational simulation for ACO financial trade-offs. File: `index.ht
 
 ### Code Organization
 
-All logic lives in `index.html`. Key orchestration flow:
+HTML markup in `index.html`, styles in `styles.css`, all JavaScript in `app.js`. Key orchestration flow:
 
 - **Data layer:** `CONSTANTS`, `PRESETS` (worst/realistic/best), `SLIDER_RANGES`, `FUNDER_VARIABLES`, `DOM_BINDINGS` (~210 entries)
 - **Compute pipeline:** `computeModel(options)` orchestrates `computeCore()` → `computeInfrastructure()` → `computePracticeBurden()` → funder helpers (`computeBankLoan`, `computeHospital`, `computePayerAdvance`, `computePE`) → `computeRafAdjustment()` → `computeMultiYear()`
@@ -128,8 +137,8 @@ All monetary negative signs use Unicode minus `−` (U+2212), not hyphen-minus `
 
 ### Testing
 ```bash
-open index.html
-# In console:
+python3 -m http.server  # Required — file:// may block external scripts
+# Open http://localhost:8000 in browser, then in console:
 runTests()        # 165 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
 captureBaseline() # After intentional calculation changes
 ```
