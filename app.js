@@ -199,7 +199,7 @@
             multiYearMsrPct: 1.5,
             acoStartingQualityPct: 82,
             acoQualityImprovementPct: 3,
-            acoMaxQualityPct: 90,
+            acoMaxQualityPct: 95,
             qualityGateCeiling: 95,
             // RAF Parameters (Realistic: ACO and market start equal)
             enableRafAdjustment: true,
@@ -1022,7 +1022,6 @@
                 infraCost,
                 // Assumptions (passed through)
                 payerSharePct, acoReservePct, multiYearMsrPct,
-                multiYearSavingsTargetPct,
                 // Loan state
                 loanPaymentsRemaining, monthlyLoanPayment,
                 // Partner params
@@ -1087,6 +1086,7 @@
             let payerAdvanceAmount = 0;
             let payerAdvanceDeduction = 0;
             let payerClawback = 0;
+            let payerUnderwaterAmt = 0;
 
             if (funding === 'bank') {
                 fundingDeduction = loanPayment;
@@ -1104,6 +1104,7 @@
                 if (acoShare > 0) {
                     payerAdvanceDeduction = Math.min(payerAdvanceAmount, acoShare);
                     fundingDeduction = payerAdvanceDeduction;
+                    payerUnderwaterAmt = (payerAdvanceAmount > acoShare) ? (payerAdvanceAmount - acoShare) : 0;
                 } else {
                     // Clawback on miss: Year 1 uses 18 months, Years 2+ use 12 months
                     const advanceMonths = (year === 1) ? 18 : 12;
@@ -1147,7 +1148,7 @@
             }
 
             // Net to PCPs
-            const netToPcps = Math.max(0, acoShare - opsRetention - reserveContribution - fundingDeduction) - payerClawback;
+            const netToPcps = Math.max(0, acoShare - opsRetention - reserveContribution - fundingDeduction) - payerClawback - payerUnderwaterAmt;
 
             // Practice burden (Year 1 = 18 months, Years 2+ = 12 months, with optional inflation)
             const burdenMonths = (year === 1) ? 18 : 12;
@@ -1176,8 +1177,7 @@
             };
         }
 
-        function computeMultiYear(scenario, baseModel, fundingType) {
-            // scenario: 'hit' (only supported value)
+        function computeMultiYear(baseModel, fundingType) {
             // baseModel: output of computeModel() for Year 1 values
             // fundingType: 'bank', 'hospital', or 'pe'
             // Returns: { rows[], totalNet, avgPerDocPerYear, failedYear, endingReserve }
@@ -1283,7 +1283,6 @@
                     payerSharePct: a.payerSharePct,
                     acoReservePct: a.acoReservePct,
                     multiYearMsrPct: a.multiYearMsrPct,
-                    multiYearSavingsTargetPct: a.multiYearSavingsTargetPct,
                     loanPaymentsRemaining,
                     monthlyLoanPayment,
                     hospitalGainSharePct: a.hospitalGainShare,
@@ -1509,10 +1508,11 @@
 
                     dimIndex++;
 
-                    // Round certain variables to appropriate precision
-                    if (['pcpCount', 'patientsPerPcp', 'tcocPerPatient', 'careManagerRatio',
-                         'attributionPct', 'bankTermMonths', 'peExitYears'].includes(varName)) {
-                        sampled[varName] = Math.round(sampled[varName]);
+                    // Snap to step size for variables with defined steps (e.g., step 6 for bankTermMonths)
+                    const range = SLIDER_RANGES[varName];
+                    if (range && range.step) {
+                        sampled[varName] = Math.round(sampled[varName] / range.step) * range.step;
+                        sampled[varName] = Math.max(bounds.min, Math.min(bounds.max, sampled[varName]));
                     }
                 } else if (monteCarloState.customConstants[varName] !== undefined) {
                     // Use custom constant value if set
@@ -1588,7 +1588,7 @@
                     if (hitTarget) {
                         sharedSavings = model.acoShare;
                         perPcpNet = sampledAssumptions.pcpCount > 0
-                            ? (model.payerNetDistributable / sampledAssumptions.pcpCount) - practiceBurden18mo
+                            ? ((model.payerNetDistributable - model.payerUnderwaterAmount) / sampledAssumptions.pcpCount) - practiceBurden18mo
                             : -practiceBurden18mo;
                     } else {
                         sharedSavings = 0;
@@ -2888,7 +2888,6 @@
                 payerSharePct: a.payerSharePct,
                 acoReservePct: a.acoReservePct,
                 multiYearMsrPct: a.multiYearMsrPct,
-                multiYearSavingsTargetPct: a.multiYearSavingsTargetPct,
                 loanPaymentsRemaining: state.loanPaymentsRemaining,
                 monthlyLoanPayment: (funding === 'bank') ? state.bankDeferredMonthlyPayment : 0,
                 hospitalGainSharePct: a.hospitalGainShare,
@@ -4106,6 +4105,8 @@
             document.getElementById('mcIterationsDisplay').textContent = '1,000';
             document.getElementById('mcVariation').value = 50;
             document.getElementById('mcVariationDisplay').textContent = '50';
+            document.getElementById('mcYearsToProject').value = 10;
+            document.getElementById('mcYearsToProjectDisplay').textContent = '10';
             document.getElementById('mcUseTriangular').checked = false;
             const toggleLabel = document.querySelector('.mc-toggle-label');
             if (toggleLabel) toggleLabel.textContent = 'Uniform spread';
@@ -4331,9 +4332,9 @@
             ['qPayerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['qPayerReserve', (m, a) => m.acoReserveFund, formatCurrency],
             ['qPayerAdvanceDeduction', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['qPayerNetToPcps', (m, a) => m.payerNetDistributable, formatCurrency],
+            ['qPayerNetToPcps', (m, a) => m.payerNetDistributable - m.payerUnderwaterAmount, formatCurrency],
             ['qPayerPcpCount', (m, a) => a.pcpCount, String],
-            ['qPayerPerPcp', (m, a) => m.payerNetDistributable / a.pcpCount, formatCurrency],
+            ['qPayerPerPcp', (m, a) => (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount, formatCurrency],
             ['qPayerPayerSharePct', (m, a) => 100 - a.payerSharePct, String],
             ['qPayerPayerShare', (m, a) => m.targetSavings - m.acoShare, formatCurrency],
             ['qPayerAcoShareLost', (m, a) => m.acoShare, formatCurrency],
@@ -4353,10 +4354,10 @@
             ['payerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['payerReserveRetention', (m, a) => m.acoReserveFund, formatCurrency],
             ['payerAdvanceDeductionHit', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['payerNetHit', (m, a) => m.payerNetDistributable, formatCurrency],
+            ['payerNetHit', (m, a) => m.payerNetDistributable - m.payerUnderwaterAmount, formatCurrency],
             ['payerPcpCountHit', (m, a) => a.pcpCount, String],
-            ['payerPerPcpHit', (m, a) => m.payerNetDistributable / a.pcpCount, formatCurrency],
-            ['payerPerPcpHitContext', (m, a) => m.payerNetDistributable / a.pcpCount, formatCurrency],
+            ['payerPerPcpHit', (m, a) => (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount, formatCurrency],
+            ['payerPerPcpHitContext', (m, a) => (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount, formatCurrency],
             ['payerPracticeBurdenPerDoc', (m, a) => m.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER, formatCurrency],
             ['payerRatchetPctHit', (m, a) => a.payerPmpmRatchet, String],
             ['payerY1PmpmHit', (m, a) => a.payerPmpm, String],
@@ -4726,7 +4727,7 @@
                     practiceBurdenPerPcp
                 };
                 const fundingForMultiYear = selectedFunding || 'bank';
-                multiYearHit = computeMultiYear('hit', baseModelForMultiYear, fundingForMultiYear);
+                multiYearHit = computeMultiYear(baseModelForMultiYear, fundingForMultiYear);
             }
 
             return {
@@ -5060,7 +5061,7 @@
             );
 
             // Payer reality check
-            const payerPerPcpY1 = m.payerNetDistributable / a.pcpCount;
+            const payerPerPcpY1 = (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount;
             const payerNetGain = payerPerPcpY1 - practiceBurden18mo;
             const payerNetGainEl = document.getElementById('payerNetGainVsStatusQuo');
             if (payerNetGainEl) payerNetGainEl.textContent = payerNetGain >= 0 ? '$' + formatCurrency(payerNetGain) : '−$' + formatCurrency(Math.abs(payerNetGain));
@@ -6418,7 +6419,6 @@
                 savingsPct: 5, isCapped: false, minAchievableCost: 900000,
                 hospitalPremium: 0, infraCost: 100000,
                 payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
-                multiYearSavingsTargetPct: 5,
                 loanPaymentsRemaining: 36, monthlyLoanPayment: 5000,
                 hospitalGainSharePct: 50, peEquitySharePct: 50,
                 currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
@@ -6437,7 +6437,6 @@
                 savingsPct: 5, isCapped: false, minAchievableCost: 900000,
                 hospitalPremium: 0, infraCost: 100000,
                 payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
-                multiYearSavingsTargetPct: 5,
                 loanPaymentsRemaining: 36, monthlyLoanPayment: 5000,
                 hospitalGainSharePct: 50, peEquitySharePct: 50,
                 currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
@@ -6455,7 +6454,6 @@
                 savingsPct: 3, isCapped: true, minAchievableCost: 970000,
                 hospitalPremium: 0, infraCost: 100000,
                 payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
-                multiYearSavingsTargetPct: 5,
                 loanPaymentsRemaining: 36, monthlyLoanPayment: 5000,
                 hospitalGainSharePct: 50, peEquitySharePct: 50,
                 currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
@@ -6472,7 +6470,6 @@
                 savingsPct: 0.5, isCapped: false, minAchievableCost: 900000,
                 hospitalPremium: 0, infraCost: 100000,
                 payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
-                multiYearSavingsTargetPct: 5,
                 loanPaymentsRemaining: 0, monthlyLoanPayment: 0,
                 hospitalGainSharePct: 50, peEquitySharePct: 50,
                 currentPmpm: 10, attributedPatients: 80000, payerClawbackPct: 75,
@@ -6490,7 +6487,6 @@
                 savingsPct: 0.5, isCapped: true, minAchievableCost: 995000,
                 hospitalPremium: 0, infraCost: 500000,
                 payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
-                multiYearSavingsTargetPct: 5,
                 loanPaymentsRemaining: 24, monthlyLoanPayment: 20000,
                 hospitalGainSharePct: 50, peEquitySharePct: 50,
                 currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
@@ -6507,6 +6503,8 @@
             const mUnderwater = computeModel({ skipMultiYear: true });
             assertExact('payer underwater with high PMPM', mUnderwater.payerIsUnderwater, true);
             assertExact('payer underwater amount > 0', mUnderwater.payerUnderwaterAmount > 0, true);
+            assertExact('payer underwater net reflects debt',
+                (mUnderwater.payerNetDistributable - mUnderwater.payerUnderwaterAmount) < 0, true);
             Object.assign(assumptions, savedAssumptions2);
 
             // ---- Boundary Slider Value Tests ----
