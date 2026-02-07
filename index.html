@@ -2381,53 +2381,45 @@
                 </div>
                 <p style="color: #64748b; margin-bottom: 20px;">Project ACO outcomes across multiple years to see long-term financial trajectory.</p>
 
-                <!-- Consolidated: Understanding This Projection (collapsed by default) -->
-                <div class="slider-group collapsed" id="group-understanding-projection" style="margin-top: 15px; margin-bottom: 20px;">
-                    <div class="slider-group-title" onclick="toggleSliderGroup('group-understanding-projection')">
-                        📖 Understanding This Projection
-                        <span class="chevron">▼</span>
-                    </div>
-                    <div class="slider-group-content" style="padding: 0; background: #f8fafc;">
-                        <!-- Subsection 1: How Ratcheting Works -->
-                        <div class="slider-group collapsed" id="group-how-ratcheting" style="margin: 0; border-radius: 0;">
-                            <div class="slider-group-title" onclick="toggleSliderGroup('group-how-ratcheting')" style="background: #f1f5f9; color: #334155; padding: 12px 15px; font-size: 0.95em;">
-                                How Ratcheting Works
-                                <span class="chevron">▼</span>
-                            </div>
-                            <div class="slider-group-content" style="padding: 15px; background: white; border: 1px solid #e2e8f0; border-top: none;">
-                                <div style="font-size: 0.9em; color: #475569; line-height: 1.6;">
-                                    <p style="margin: 0 0 10px 0;"><strong>Benchmark Ratcheting (TCOC):</strong> Each year the ACO hits its savings target, payers reduce next year's benchmark by the ratchet percentage. This shrinks achievable savings over time until the ACO cannot meet the MSR threshold.</p>
-                                    <p style="margin: 0 0 10px 0;"><strong>Quality Gate Ratcheting:</strong> Payers also increase quality requirements annually. Meanwhile, ACOs have a ceiling on achievable quality. When the gate exceeds this ceiling, quality failure becomes inevitable.</p>
-                                    <p style="margin: 0;"><strong>Key Insight:</strong> Quality is an independent failure point. An ACO can optimize costs perfectly and still fail if quality requirements outpace improvement capability. This dual-squeeze represents the full picture of ACO sustainability risk.</p>
-                                </div>
-                            </div>
-                        </div>
-                        <!-- Subsection 2: Real-World Context -->
-                        <div class="slider-group collapsed" id="group-real-world-context" style="margin: 0; border-radius: 0;">
-                            <div class="slider-group-title" onclick="toggleSliderGroup('group-real-world-context')" style="background: #fef3c7; color: #92400e; padding: 12px 15px; font-size: 0.95em;">
-                                Real-World Context: Medicare vs MA/Commercial
-                                <span class="chevron">▼</span>
-                            </div>
-                            <div class="slider-group-content" style="padding: 15px; background: #fffbeb; border: 1px solid #fde68a; border-top: none;">
-                                <div style="font-size: 0.9em; color: #78350f; line-height: 1.6;">
-                                    <p style="margin: 0 0 10px 0;"><strong>Medicare MSSP:</strong> CMS has a vested interest in ACO success and regularly adjusts program parameters (benchmarks, quality thresholds, shared savings rates) to prevent widespread failure. Historical data shows CMS intervening when too many ACOs struggle.</p>
-                                    <p style="margin: 0;"><strong>Medicare Advantage &amp; Commercial Payers:</strong> Private payers face quarterly earnings pressure. During contract renewals, they have an interest in ratcheting benchmarks and raising quality thresholds—capturing prior savings as the new baseline and making it progressively harder for ACOs to earn shared savings. This simulation models those dynamics.</p>
-                                </div>
+                <div class="highlight-box" style="margin: 0 0 20px 0; background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left: 4px solid #3b82f6;">
+                    <strong style="color: #1e40af; font-size: 1.05em;">&#128214; Understanding This Projection</strong>
+                    <p style="margin: 8px 0 12px 0; font-size: 0.9em; color: #1e3a5f; line-height: 1.6;">
+                        This projection models compounding pressures that determine how long an ACO remains viable. Four variable groups below control these dynamics — click any to expand and fine-tune:
+                    </p>
+                    <ul style="margin: 0 0 12px 0; padding-left: 20px; font-size: 0.9em; color: #1e3a5f; line-height: 1.8; list-style: none;">
+                        <li style="cursor: pointer;" onclick="var el=document.getElementById('group-contract-benchmark'); el.classList.remove('collapsed'); setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},150);">
+                            <span style="color: #1e3a8a; text-decoration: underline;">&#8226; Contract &amp; Benchmark</span>
+                            — Each year the ACO hits its target, payers ratchet down next year's benchmark. This shrinks achievable savings until the ACO cannot meet the MSR threshold.
+                        </li>
+                        <li style="cursor: pointer; margin-top: 4px;" onclick="var el=document.getElementById('group-step6-raf'); el.classList.remove('collapsed'); setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},150);">
+                            <span style="color: #1e3a8a; text-decoration: underline;">&#8226; Risk Adjustment (HCC/RAF)</span>
+                            — RAF ratio determines whether beating the benchmark is easier or harder. Small changes cascade through all financial outcomes.
+                        </li>
+                        <li style="cursor: pointer; margin-top: 4px;" onclick="var el=document.getElementById('group-quality-dynamics'); el.classList.remove('collapsed'); setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},150);">
+                            <span style="color: #1e3a8a; text-decoration: underline;">&#8226; Quality Dynamics</span>
+                            — Payers ratchet up quality requirements annually while ACOs have a ceiling on achievable quality. When the gate exceeds this ceiling, quality failure becomes inevitable — even with perfect cost optimization.
+                        </li>
+                        <li style="cursor: pointer; margin-top: 4px;" onclick="var el=document.getElementById('group-inflation-growth'); el.classList.remove('collapsed'); setTimeout(function(){el.scrollIntoView({behavior:'smooth',block:'start'})},150);">
+                            <span style="color: #1e3a8a; text-decoration: underline;">&#8226; Inflation &amp; Growth</span>
+                            — TCOC inflation affects the benchmark and cost trajectory over time.
+                        </li>
+                    </ul>
+                    <span style="cursor: pointer; color: #1e3a8a; font-size: 1.0em; font-weight: 600; user-select: none;" onclick="var content=this.nextElementSibling; var open=content.style.display!=='none'; content.style.display=open?'none':'block'; this.innerHTML=open?'&#9654; Learn more about real-world context &amp; exploration recipes':'&#9660; Hide details';">&#9654; Learn more about real-world context &amp; exploration recipes</span>
+                    <div style="display: none; margin-top: 12px; background: rgba(255,255,255,0.6); border-radius: 8px; padding: 15px; border: 1px solid #bfdbfe;">
+                        <div style="margin-bottom: 14px; background: #fffbeb; border-radius: 6px; padding: 12px; border: 1px solid #fde68a;">
+                            <strong style="color: #92400e; font-size: 0.95em;">Real-World Context: Medicare vs MA/Commercial</strong>
+                            <div style="font-size: 0.9em; color: #78350f; line-height: 1.6; margin-top: 6px;">
+                                <p style="margin: 0 0 10px 0;"><strong>Medicare MSSP:</strong> CMS has a vested interest in ACO success and regularly adjusts program parameters (benchmarks, quality thresholds, shared savings rates) to prevent widespread failure. Historical data shows CMS intervening when too many ACOs struggle.</p>
+                                <p style="margin: 0;"><strong>Medicare Advantage &amp; Commercial Payers:</strong> Private payers face quarterly earnings pressure. During contract renewals, they have an interest in ratcheting benchmarks and raising quality thresholds—capturing prior savings as the new baseline and making it progressively harder for ACOs to earn shared savings. This simulation models those dynamics.</p>
                             </div>
                         </div>
-                        <!-- Subsection 3: Try This -->
-                        <div class="slider-group collapsed" id="group-try-this" style="margin: 0; border-radius: 0 0 8px 8px;">
-                            <div class="slider-group-title" onclick="toggleSliderGroup('group-try-this')" style="background: #fef2f2; color: #991b1b; padding: 12px 15px; font-size: 0.95em;">
-                                Try This: Exploration Recipes
-                                <span class="chevron">▼</span>
-                            </div>
-                            <div class="slider-group-content" style="padding: 15px; background: #fff5f5; border: 1px solid #fecaca; border-top: none; border-radius: 0 0 8px 8px;">
-                                <div style="font-size: 0.9em; color: #7f1d1d; line-height: 1.6;">
-                                    <p style="margin: 0 0 8px 0;"><strong>Recipe 1:</strong> Set Quality Gate Ratchet to 5%, ACO Quality Improvement to 2%. Watch the quality gate overtake improvement capacity.</p>
-                                    <p style="margin: 0 0 8px 0;"><strong>Recipe 2:</strong> Set Benchmark Ratchet to 3% and Target Savings to 4%. Notice how achievable savings shrink below MSR.</p>
-                                    <p style="margin: 0 0 8px 0;"><strong>Recipe 3:</strong> Select "Best Case" preset, then project 15+ years. Even favorable conditions hit the ratchet ceiling.</p>
-                                    <p style="margin: 0;"><strong>Recipe 4:</strong> Enable inflation (3%) applied to benchmark and set Benchmark Ratchet to 2%. Does inflation offset the ratchet?</p>
-                                </div>
+                        <div style="background: #fff5f5; border-radius: 6px; padding: 12px; border: 1px solid #fecaca;">
+                            <strong style="color: #991b1b; font-size: 0.95em;">Try This: Exploration Recipes</strong>
+                            <div style="font-size: 0.9em; color: #7f1d1d; line-height: 1.6; margin-top: 6px;">
+                                <p style="margin: 0 0 8px 0;"><strong>Recipe 1:</strong> Set Quality Gate Ratchet to 5%, ACO Quality Improvement to 2%. Watch the quality gate overtake improvement capacity.</p>
+                                <p style="margin: 0 0 8px 0;"><strong>Recipe 2:</strong> Set Benchmark Ratchet to 3% and Target Savings to 4%. Notice how achievable savings shrink below MSR.</p>
+                                <p style="margin: 0 0 8px 0;"><strong>Recipe 3:</strong> Select "Best Case" preset, then project 15+ years. Even favorable conditions hit the ratchet ceiling.</p>
+                                <p style="margin: 0;"><strong>Recipe 4:</strong> Enable inflation (3%) applied to benchmark and set Benchmark Ratchet to 2%. Does inflation offset the ratchet?</p>
                             </div>
                         </div>
                     </div>
