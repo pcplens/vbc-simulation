@@ -90,7 +90,7 @@
                         <div class="slider-group-title">Network Size</div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Number of PCPs</div>
+                            <label for="pcpCount" class="slider-label">Number of PCPs</label>
                             <div class="slider-container">
                                 <input type="range" id="pcpCount" min="1" max="200" value="100" oninput="updateAssumption('pcpCount', this.value)">
                                 <div class="slider-value"><span id="pcpCountDisplay">100</span></div>
@@ -98,7 +98,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Patients per PCP</div>
+                            <label for="patientsPerPcp" class="slider-label">Patients per PCP</label>
                             <div class="slider-container">
                                 <input type="range" id="patientsPerPcp" min="50" max="2000" step="10" value="1000" oninput="updateAssumption('patientsPerPcp', this.value)">
                                 <div class="slider-value"><span id="patientsPerPcpDisplay">1,000</span></div>
@@ -106,13 +106,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="attributionPct" class="slider-label">
                                 <span class="tooltip-container">
                                     Attribution %
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Percentage of total panel patients attributed to the ACO for value-based care. Attribution depends on payer contracts and patient eligibility criteria.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="attributionPct" min="30" max="100" step="1" value="80" oninput="updateAssumption('attributionPct', this.value)">
                                 <div class="slider-value"><span id="attributionPctDisplay">80</span>%</div>
@@ -124,13 +124,13 @@
                         <div class="slider-group-title">Financial Parameters</div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="tcocPerPatient" class="slider-label">
                                 <span class="tooltip-container">
                                     Annual TCOC per Patient
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Total Cost of Care (TCOC) — the average annual healthcare spending per patient, including doctor visits, hospitalizations, prescriptions, and all other medical services.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="tcocPerPatient" min="5000" max="20000" step="500" value="10000" oninput="updateAssumption('tcocPerPatient', this.value)">
                                 <div class="slider-value">$<span id="tcocPerPatientDisplay">10,000</span></div>
@@ -138,13 +138,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="savingsTargetPct" class="slider-label">
                                 <span class="tooltip-container">
                                     Target Savings %
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">The savings goal as a percentage of total healthcare spending. Higher targets mean larger potential payouts, but are harder to achieve.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="savingsTargetPct" min="0.5" max="10" step="0.5" value="5" oninput="updateAssumption('savingsTargetPct', this.value)">
                                 <div class="slider-value"><span id="savingsTargetPctDisplay">5.0</span>%</div>
@@ -152,13 +152,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="msrPct" class="slider-label">
                                 <span class="tooltip-container">
                                     Minimum Savings Rate (MSR)
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">The minimum savings threshold required before ACO receives any payout. Save less than MSR, payout = $0.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="msrPct" min="0" max="5" step="0.5" value="1.5" oninput="updateAssumption('msrPct', this.value)">
                                 <div class="slider-value"><span id="msrPctDisplay">1.5</span>%</div>
@@ -166,13 +166,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="payerSharePct" class="slider-label">
                                 <span class="tooltip-container">
                                     ACO Share of Savings %
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">The percentage of achieved savings shared with the ACO. The payer keeps the remainder.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="payerSharePct" min="25" max="100" step="5" value="50" oninput="updateAssumption('payerSharePct', this.value)">
                                 <div class="slider-value"><span id="payerSharePctDisplay">50</span>%</div>
@@ -190,13 +190,13 @@
                             </p>
 
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="qualityGatePct" class="slider-label">
                                     <span class="tooltip-container">
                                         Quality Gate Required %
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">Minimum quality score required for any shared savings payout. If quality is below this threshold, payer keeps all savings even if TCOC is reduced.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="qualityGatePct" min="0" max="95" step="5" value="80" oninput="updateAssumption('qualityGatePct', this.value)">
                                     <div class="slider-value"><span id="qualityGatePctDisplay">80</span>%</div>
@@ -204,13 +204,13 @@
                             </div>
 
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="acoStartingQualityPct" class="slider-label">
                                     <span class="tooltip-container">
                                         Starting Quality Score
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">ACO's baseline quality score in Year 1, before improvement efforts take effect. Should be at or above the Quality Gate to pass Year 1.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="acoStartingQualityPct" min="50" max="95" step="1" value="80" oninput="updateAssumption('acoStartingQualityPct', this.value)">
                                     <div class="slider-value"><span id="acoStartingQualityPctDisplay">80</span>%</div>
@@ -231,13 +231,13 @@
                             </p>
 
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="acoBaseRaf" class="slider-label">
                                     <span class="tooltip-container">
                                         ACO Starting RAF
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">ACO's baseline RAF score reflecting documented health complexity. 1.0 = average; higher = sicker/better documented patients.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="acoBaseRaf" min="0.8" max="1.5" step="0.05" value="1.0" oninput="updateAssumption('acoBaseRaf', parseFloat(this.value))">
                                     <div class="slider-value"><span id="acoBaseRafDisplay">1.00</span></div>
@@ -245,13 +245,13 @@
                             </div>
 
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="regionalBaseRaf" class="slider-label">
                                     <span class="tooltip-container">
                                         Regional Market RAF
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">Regional market's average RAF score. Used as comparison baseline for benchmark adjustment.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="regionalBaseRaf" min="0.8" max="1.5" step="0.05" value="1.0" oninput="updateAssumption('regionalBaseRaf', parseFloat(this.value))">
                                     <div class="slider-value"><span id="regionalBaseRafDisplay">1.00</span></div>
@@ -301,47 +301,47 @@
                 <div class="step-content">
                     <p>The math looks incredible on paper. Here's what the ACO could earn:</p>
 
-                    <div class="calculation">
+                    <div class="calculation" aria-live="polite">
                         <div class="calculation-inner">
                             <div class="calculation-line">
-                                <span>Total Panel Patients <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Total patients across all PCPs, before attribution filter.</span></span>:</span>
+                                <span>Total Panel Patients <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Total patients across all PCPs, before attribution filter.</span></span>:</span>
                                 <span><span id="totalPanelPatientsCalc">100,000</span></span>
                             </div>
                             <div class="calculation-line">
-                                <span>x Attribution % <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Percentage of panel patients attributed to the ACO for value-based care.</span></span>:</span>
+                                <span>x Attribution % <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Percentage of panel patients attributed to the ACO for value-based care.</span></span>:</span>
                                 <span><span id="attributionPctCalc">80</span>%</span>
                             </div>
                             <div class="calculation-line subtotal">
-                                <span>= Attributed Patients <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Patients included in ACO value-based care calculations.</span></span>:</span>
+                                <span>= Attributed Patients <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Patients included in ACO value-based care calculations.</span></span>:</span>
                                 <span><span id="attributedPatientsCalc">80,000</span></span>
                             </div>
                             <div class="calculation-line">
-                                <span>x TCOC per Patient <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Average annual healthcare spending per patient in the ACO population.</span></span>:</span>
+                                <span>x TCOC per Patient <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Average annual healthcare spending per patient in the ACO population.</span></span>:</span>
                                 <span>$<span id="tcocPerPatientCalc">10,000</span></span>
                             </div>
                             <div class="calculation-line subtotal">
-                                <span>= Attributed TCOC <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Total Cost of Care — all healthcare spending for attributed patients including visits, hospitalizations, prescriptions, and procedures.</span></span>:</span>
+                                <span>= Attributed TCOC <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Total Cost of Care — all healthcare spending for attributed patients including visits, hospitalizations, prescriptions, and procedures.</span></span>:</span>
                                 <span style="color: #94a3b8;">$<span id="totalTcocCalc">800,000,000</span></span>
                             </div>
                             <!-- RAF Adjustment Lines (conditionally shown) -->
                             <div class="calculation-line" id="rafAdjustmentLine" style="display: none; font-size: 0.9em;">
-                                <span>x RAF Adjustment <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Risk Adjustment Factor ratio: ACO RAF / Regional RAF. Values > 1.0 increase benchmark (easier savings); < 1.0 decrease benchmark (harder).</span></span> (<span id="acoRafCalc">1.00</span> / <span id="regionalRafCalc">1.00</span>):</span>
+                                <span>x RAF Adjustment <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Risk Adjustment Factor ratio: ACO RAF / Regional RAF. Values > 1.0 increase benchmark (easier savings); < 1.0 decrease benchmark (harder).</span></span> (<span id="acoRafCalc">1.00</span> / <span id="regionalRafCalc">1.00</span>):</span>
                                 <span id="rafRatioCalcContainer"><span id="rafRatioCalc">1.000</span>x</span>
                             </div>
                             <div class="calculation-line subtotal" id="adjustedBenchmarkLine" style="display: none;">
-                                <span>= RAF-Adjusted Benchmark <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The benchmark after RAF adjustment: Base TCOC x (ACO RAF / Regional RAF). Savings are calculated against this adjusted benchmark.</span></span>:</span>
+                                <span>= RAF-Adjusted Benchmark <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The benchmark after RAF adjustment: Base TCOC x (ACO RAF / Regional RAF). Savings are calculated against this adjusted benchmark.</span></span>:</span>
                                 <span style="color: #94a3b8;">$<span id="adjustedBenchmarkCalc">1,000,000,000</span></span>
                             </div>
                             <div class="calculation-line">
-                                <span>x Target Savings <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The dollar amount the ACO aims to save below the payer's benchmark.</span></span> (<span id="savingsTargetPctCalc">5</span>%):</span>
+                                <span>x Target Savings <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The dollar amount the ACO aims to save below the payer's benchmark.</span></span> (<span id="savingsTargetPctCalc">5</span>%):</span>
                                 <span style="color: #10b981;">$<span id="targetSavingsCalc">50,000,000</span></span>
                             </div>
                             <div class="calculation-line">
-                                <span>x ACO Gain Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer (typically 50-60%). The payer keeps the remainder.</span></span> (<span id="payerSharePctCalc">50</span>%):</span>
+                                <span>x ACO Gain Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer (typically 50-60%). The payer keeps the remainder.</span></span> (<span id="payerSharePctCalc">50</span>%):</span>
                                 <span style="color: #fbbf24;">$<span id="acoShareCalc">25,000,000</span></span>
                             </div>
                             <div class="calculation-line" style="color: #94a3b8; font-size: 0.9em;">
-                                <span>(Payer keeps <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of savings the payer retains. This is the complement of ACO Share.</span></span> <span id="payerKeepsPctCalc">50</span>%):</span>
+                                <span>(Payer keeps <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of savings the payer retains. This is the complement of ACO Share.</span></span> <span id="payerKeepsPctCalc">50</span>%):</span>
                                 <span>$<span id="payerShareAmountCalc">25,000,000</span></span>
                             </div>
                             <div class="calculation-line total">
@@ -413,13 +413,13 @@
                         <div class="slider-group-title">ACO Infrastructure Costs (Year 1)</div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="dataAnalyticsCost" class="slider-label">
                                 <span class="tooltip-container">
                                     Data & Analytics Platform
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Population health dashboards, risk stratification, predictive analytics, and BI tools. Identifies high-risk patients and tracks ACO performance — distinct from IT infrastructure and quality measure workflows.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="dataAnalyticsCost" min="200000" max="800000" step="50000" value="450000" oninput="updateAssumption('dataAnalyticsCost', this.value)">
                                 <div class="slider-value">$<span id="dataAnalyticsCostDisplay">450K</span></div>
@@ -427,7 +427,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Care Manager Ratio (1 per X high-risk)</div>
+                            <label for="careManagerRatio" class="slider-label">Care Manager Ratio (1 per X high-risk)</label>
                             <div class="slider-container">
                                 <input type="range" id="careManagerRatio" min="3000" max="7000" step="500" value="5000" oninput="updateAssumption('careManagerRatio', this.value)">
                                 <div class="slider-value">1:<span id="careManagerRatioDisplay">5,000</span></div>
@@ -435,7 +435,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Care Manager Salary (+ benefits)</div>
+                            <label for="careManagerSalary" class="slider-label">Care Manager Salary (+ benefits)</label>
                             <div class="slider-container">
                                 <input type="range" id="careManagerSalary" min="60000" max="110000" step="5000" value="80000" oninput="updateAssumption('careManagerSalary', this.value)">
                                 <div class="slider-value">$<span id="careManagerSalaryDisplay">80K</span></div>
@@ -443,7 +443,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Administration (CEO, Med Dir, Staff)</div>
+                            <label for="adminCost" class="slider-label">Administration (CEO, Med Dir, Staff)</label>
                             <div class="slider-container">
                                 <input type="range" id="adminCost" min="500000" max="2000000" step="100000" value="1000000" oninput="updateAssumption('adminCost', this.value)">
                                 <div class="slider-value">$<span id="adminCostDisplay">1.0M</span></div>
@@ -451,13 +451,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="itCost" class="slider-label">
                                 <span class="tooltip-container">
                                     IT / EHR Integration
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">EHR connectivity, health information exchange (HIE), data feeds, and API integration. The infrastructure that moves clinical data between practices and the ACO.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="itCost" min="50000" max="350000" step="25000" value="150000" oninput="updateAssumption('itCost', this.value)">
                                 <div class="slider-value">$<span id="itCostDisplay">150K</span></div>
@@ -465,7 +465,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Legal / Compliance</div>
+                            <label for="legalCost" class="slider-label">Legal / Compliance</label>
                             <div class="slider-container">
                                 <input type="range" id="legalCost" min="50000" max="200000" step="25000" value="100000" oninput="updateAssumption('legalCost', this.value)">
                                 <div class="slider-value">$<span id="legalCostDisplay">100K</span></div>
@@ -473,13 +473,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="qualityCost" class="slider-label">
                                 <span class="tooltip-container">
                                     Quality Reporting
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Quality coordinators, chart abstractors, measure validation tools, and submission fees. The staff and vendor costs for abstracting, validating, and submitting quality measures (eCQM, HEDIS) to payers.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="qualityCost" min="50000" max="250000" step="25000" value="150000" oninput="updateAssumption('qualityCost', this.value)">
                                 <div class="slider-value">$<span id="qualityCostDisplay">150K</span></div>
@@ -491,13 +491,13 @@
                         <div class="slider-group-title">Per PCP Burden</div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="lostHoursPerWeek" class="slider-label">
                                 <span class="tooltip-container">
                                     Lost Clinic Hours/Week per PCP
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Time spent on ACO activities instead of seeing patients: care coordination meetings, reviewing dashboards, quality documentation, and huddles with care managers.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="lostHoursPerWeek" min="1" max="6" step="0.5" value="3" oninput="updateAssumption('lostHoursPerWeek', this.value)">
                                 <div class="slider-value"><span id="lostHoursPerWeekDisplay">3.0</span> hrs</div>
@@ -505,7 +505,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">FFS Revenue per Visit</div>
+                            <label for="revenuePerVisit" class="slider-label">FFS Revenue per Visit</label>
                             <div class="slider-container">
                                 <input type="range" id="revenuePerVisit" min="60" max="150" step="10" value="100" oninput="updateAssumption('revenuePerVisit', this.value)">
                                 <div class="slider-value">$<span id="revenuePerVisitDisplay">100</span></div>
@@ -513,7 +513,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Visits per Hour</div>
+                            <label for="visitsPerHour" class="slider-label">Visits per Hour</label>
                             <div class="slider-container">
                                 <input type="range" id="visitsPerHour" min="1" max="5" step="0.5" value="3" oninput="updateAssumption('visitsPerHour', this.value)">
                                 <div class="slider-value"><span id="visitsPerHourDisplay">3.0</span></div>
@@ -521,13 +521,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="practiceStaffFtePerPcp" class="slider-label">
                                 <span class="tooltip-container">
                                     Practice Staff FTE per PCP
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Additional practice staff time needed per PCP for ACO tasks: pre-visit planning, care gap outreach, referral tracking, and quality documentation.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="practiceStaffFtePerPcp" min="0.1" max="0.5" step="0.05" value="0.25" oninput="updateAssumption('practiceStaffFtePerPcp', this.value)">
                                 <div class="slider-value"><span id="practiceStaffFtePerPcpDisplay">0.25</span> FTE</div>
@@ -535,7 +535,7 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">Practice Staff Salary</div>
+                            <label for="practiceStaffSalary" class="slider-label">Practice Staff Salary</label>
                             <div class="slider-container">
                                 <input type="range" id="practiceStaffSalary" min="40000" max="70000" step="5000" value="50000" oninput="updateAssumption('practiceStaffSalary', this.value)">
                                 <div class="slider-value">$<span id="practiceStaffSalaryDisplay">50K</span></div>
@@ -611,7 +611,7 @@
                     <div class="highlight-box" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left-color: #f59e0b;">
                         <strong>Critical Timing Issue:</strong><br>
                         The ACO "savings check" won't arrive for <strong>18 months</strong> (performance year + 6 month claims lag). The ACO needs upfront capital.
-                        <div class="stat-grid" style="margin-top: 15px;">
+                        <div class="stat-grid" style="margin-top: 15px;" aria-live="polite">
                             <div class="stat-card danger">
                                 <div class="stat-label">18-Month ACO Funding</div>
                                 <div class="stat-value danger">$<span id="acoFundingNeededDisplay">3.1M</span></div>
@@ -650,7 +650,7 @@
                         </p>
                     </div>
 
-                    <table class="funder-comparison-table">
+                    <table class="funder-comparison-table" aria-live="polite">
                         <thead>
                             <tr><th></th><th>Bank Loan</th><th>Hospital</th><th>Payer Advance</th><th>Private Equity</th></tr>
                         </thead>
@@ -674,7 +674,7 @@
                                 <div class="funding-params-title">&#128179; Bank Loan Parameters</div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">Interest Rate (APR)</div>
+                                    <label for="bankInterestRate" class="slider-label">Interest Rate (APR)</label>
                                     <div class="slider-container">
                                         <input type="range" id="bankInterestRate" min="5" max="15" step="0.5" value="8" oninput="updateAssumption('bankInterestRate', this.value)">
                                         <div class="slider-value"><span id="bankInterestRateDisplay">8.0</span>%</div>
@@ -682,7 +682,7 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">Loan Term (months)</div>
+                                    <label for="bankTermMonths" class="slider-label">Loan Term (months)</label>
                                     <div class="slider-container">
                                         <input type="range" id="bankTermMonths" min="24" max="60" step="6" value="36" oninput="updateAssumption('bankTermMonths', this.value)">
                                         <div class="slider-value"><span id="bankTermMonthsDisplay">36</span> mo</div>
@@ -690,7 +690,7 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">Origination Fee</div>
+                                    <label for="bankOrigFee" class="slider-label">Origination Fee</label>
                                     <div class="slider-container">
                                         <input type="range" id="bankOrigFee" min="0" max="3" step="0.5" value="1" oninput="updateAssumption('bankOrigFee', this.value)">
                                         <div class="slider-value"><span id="bankOrigFeeDisplay">1.0</span>%</div>
@@ -720,7 +720,7 @@
                                             <span>$<span id="bankFundingNeeded">3,135,000</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>+ Origination Fee <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">One-time fee charged by the lender at loan origination, typically 1-3% of loan amount.</span></span> (<span id="bankOrigFeePctCalc">1</span>%):</span>
+                                            <span>+ Origination Fee <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">One-time fee charged by the lender at loan origination, typically 1-3% of loan amount.</span></span> (<span id="bankOrigFeePctCalc">1</span>%):</span>
                                             <span>$<span id="bankOrigFeeCalc">31,350</span></span>
                                         </div>
                                         <div class="calculation-line">
@@ -728,7 +728,7 @@
                                             <span>$<span id="bankPrincipalCalc">3,135,000</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>+ Capitalized Interest <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Interest that accrues during the 18-month deferral period and is added to the principal balance before repayment begins.</span></span> (18 mo):</span>
+                                            <span>+ Capitalized Interest <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Interest that accrues during the 18-month deferral period and is added to the principal balance before repayment begins.</span></span> (18 mo):</span>
                                             <span style="color: #f59e0b;">$<span id="bankCapitalizedInterest">398,000</span></span>
                                         </div>
                                         <div class="calculation-line total">
@@ -788,13 +788,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="hospitalGainShare" class="slider-label">
                                         <span class="tooltip-container">
                                             Hospital Gain Share %
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">The percentage of ACO shared savings that goes to the hospital as their return on investment. This is THE key negotiation point - hospitals typically ask for 40-60%.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="hospitalGainShare" min="30" max="70" step="5" value="50" oninput="updateAssumption('hospitalGainShare', this.value)">
                                         <div class="slider-value"><span id="hospitalGainShareDisplay">50</span>%</div>
@@ -802,13 +802,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="hospitalReferralLock" class="slider-label">
                                         <span class="tooltip-container">
                                             Referral Lock-in %
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">The percentage of referrals the ACO must send to hospital facilities. Higher lock-in means less flexibility to use lower-cost independent providers. Typical PHO agreements range from 50-70%.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="hospitalReferralLock" min="30" max="80" step="5" value="60" oninput="updateAssumption('hospitalReferralLock', this.value)">
                                         <div class="slider-value"><span id="hospitalReferralLockDisplay">60</span>%</div>
@@ -816,13 +816,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="hospitalReferralPct" class="slider-label">
                                         <span class="tooltip-container">
                                             Referral % of TCOC
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">Industry assumption: What percentage of total healthcare spending goes to specialist referrals, imaging, and procedures. Typically 25-35% of TCOC in most markets. Varies by specialty mix and referral patterns.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="hospitalReferralPct" min="20" max="40" step="2" value="30" oninput="updateAssumption('hospitalReferralPct', this.value)">
                                         <div class="slider-value"><span id="hospitalReferralPctDisplay">30</span>%</div>
@@ -830,13 +830,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="hospitalCostPremium" class="slider-label">
                                         <span class="tooltip-container">
                                             Hospital Cost Premium
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">How much more hospital-based facilities charge compared to independent providers for the same service. Hospital outpatient facilities typically charge 15-30% more due to facility fees.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="hospitalCostPremium" min="10" max="40" step="2" value="22" oninput="updateAssumption('hospitalCostPremium', this.value)">
                                         <div class="slider-value"><span id="hospitalCostPremiumDisplay">22</span>%</div>
@@ -846,15 +846,15 @@
                                 <div class="calculation" style="margin-top: 20px;">
                                     <div class="calculation-inner">
                                         <div class="calculation-line">
-                                            <span>Total Referral Volume <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Dollar value of specialist referrals, imaging, and procedures — typically 25-35% of total cost of care.</span></span>:</span>
+                                            <span>Total Referral Volume <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Dollar value of specialist referrals, imaging, and procedures — typically 25-35% of total cost of care.</span></span>:</span>
                                             <span>$<span id="hospitalReferralVolumeCalc">300M</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>Locked to Hospital <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of referral spending that must go to hospital facilities under the PHO agreement.</span></span> (<span id="hospitalLockPctCalc">60</span>%):</span>
+                                            <span>Locked to Hospital <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of referral spending that must go to hospital facilities under the PHO agreement.</span></span> (<span id="hospitalLockPctCalc">60</span>%):</span>
                                             <span>$<span id="hospitalLockedVolumeCalc">180M</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>Hospital Premium Cost <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Additional cost charged by hospital-based facilities compared to independent providers for the same service, reducing realized savings.</span></span> (<span id="hospitalPremiumPctCalc">22</span>%):</span>
+                                            <span>Hospital Premium Cost <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Additional cost charged by hospital-based facilities compared to independent providers for the same service, reducing realized savings.</span></span> (<span id="hospitalPremiumPctCalc">22</span>%):</span>
                                             <span style="color: #fca5a5;">$<span id="hospitalPremiumCostCalc">39.6M</span></span>
                                         </div>
                                         <div class="calculation-line total">
@@ -893,13 +893,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="payerPmpm" class="slider-label">
                                         <span class="tooltip-container">
                                             PMPM Advance ($)
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">Monthly per-member-per-month payment from payer during operations. Higher PMPM means more upfront cash but larger deduction from ACO share.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="payerPmpm" min="1" max="20" step="1" value="10" oninput="updateAssumption('payerPmpm', this.value)">
                                         <div class="slider-value">$<span id="payerPmpmDisplay">10</span></div>
@@ -907,13 +907,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="payerClawbackPct" class="slider-label">
                                         <span class="tooltip-container">
                                             Clawback % (if missed)
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">Percentage of advance the payer reclaims if ACO misses targets. 100% means full clawback; lower percentages mean the payer absorbs some loss.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="payerClawbackPct" min="0" max="100" step="5" value="75" oninput="updateAssumption('payerClawbackPct', this.value)">
                                         <div class="slider-value"><span id="payerClawbackPctDisplay">75</span>%</div>
@@ -921,13 +921,13 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">
+                                    <label for="payerPmpmRatchet" class="slider-label">
                                         <span class="tooltip-container">
                                             Annual PMPM Ratchet %
-                                            <span class="tooltip-icon">i</span>
+                                            <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                             <span class="tooltip-text">Percentage by which PMPM is reduced each year during contract renewals. 100% ratchet means PMPM drops to $0 (discontinued) after Year 1.</span>
                                         </span>
-                                    </div>
+                                    </label>
                                     <div class="slider-container">
                                         <input type="range" id="payerPmpmRatchet" min="0" max="100" step="5" value="75" oninput="updateAssumption('payerPmpmRatchet', this.value)">
                                         <div class="slider-value"><span id="payerPmpmRatchetDisplay">75</span>%</div>
@@ -937,7 +937,7 @@
                                 <div class="calculation" style="margin-top: 20px;">
                                     <div class="calculation-inner">
                                         <div class="calculation-line">
-                                            <span>PMPM Rate <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Per-Member-Per-Month rate — the dollar amount paid by the payer for each attributed patient each month.</span></span>:</span>
+                                            <span>PMPM Rate <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Per-Member-Per-Month rate — the dollar amount paid by the payer for each attributed patient each month.</span></span>:</span>
                                             <span>$<span id="payerPmpmCalc">10</span>/member/month</span>
                                         </div>
                                         <div class="calculation-line">
@@ -949,7 +949,7 @@
                                             <span style="color: #10b981;">$<span id="payerMonthlyCalc">1M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span>Total Advance <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Monthly PMPM payments from the payer during the 18-month operations period, providing upfront cash flow before reconciliation.</span></span> (18 mo):</span>
+                                            <span>Total Advance <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Monthly PMPM payments from the payer during the 18-month operations period, providing upfront cash flow before reconciliation.</span></span> (18 mo):</span>
                                             <span style="color: #10b981;">$<span id="payerTotalAdvanceCalc">18M</span></span>
                                         </div>
                                     </div>
@@ -976,7 +976,7 @@
                                 <div class="funding-params-title">&#128188; Private Equity Parameters</div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">PE Gain Share %</div>
+                                    <label for="peEquityShare" class="slider-label">PE Gain Share %</label>
                                     <div class="slider-container">
                                         <input type="range" id="peEquityShare" min="30" max="70" step="5" value="50" oninput="updateAssumption('peEquityShare', this.value)">
                                         <div class="slider-value"><span id="peEquityShareDisplay">50</span>%</div>
@@ -984,7 +984,7 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">PE Board Control %</div>
+                                    <label for="peBoardControl" class="slider-label">PE Board Control %</label>
                                     <div class="slider-container">
                                         <input type="range" id="peBoardControl" min="40" max="70" step="5" value="51" oninput="updateAssumption('peBoardControl', this.value)">
                                         <div class="slider-value"><span id="peBoardControlDisplay">51</span>%</div>
@@ -992,7 +992,7 @@
                                 </div>
 
                                 <div class="slider-row">
-                                    <div class="slider-label">Expected Exit Timeline (years)</div>
+                                    <label for="peExitYears" class="slider-label">Expected Exit Timeline (years)</label>
                                     <div class="slider-container">
                                         <input type="range" id="peExitYears" min="3" max="10" step="1" value="5" oninput="updateAssumption('peExitYears', this.value)">
                                         <div class="slider-value"><span id="peExitYearsDisplay">5</span> yrs</div>
@@ -1064,7 +1064,7 @@
                     </div>
 
                     <!-- MISSED TARGET SCENARIO -->
-                    <div class="scenario-content active" id="scenario-miss">
+                    <div class="scenario-content active" id="scenario-miss" aria-live="polite">
                         <div class="result-banner failure" id="shared-miss-banner">
                             ACO Missed the Target - Saved only 1% (below <span id="msrPctMiss">2</span>% MSR)
                         </div>
@@ -1085,12 +1085,12 @@
                                     <span>$<span id="actualSavingsMiss">10M</span></span>
                                 </div>
                                 <div class="calculation-line">
-                                    <span>MSR Threshold <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Minimum Savings Rate threshold — the ACO must exceed this dollar amount before receiving any payout.</span></span> (<span id="msrPctMissCalc">2</span>%):</span>
+                                    <span>MSR Threshold <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Minimum Savings Rate threshold — the ACO must exceed this dollar amount before receiving any payout.</span></span> (<span id="msrPctMissCalc">2</span>%):</span>
                                     <span>$<span id="msrThresholdMiss">20M</span></span>
                                 </div>
                                 <div class="calculation-line total">
-                                    <span>ACO Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer. Zero when savings fall below MSR threshold.</span></span>:</span>
-                                    <span style="color: #ef4444;">$0</span>
+                                    <span>ACO Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer. Zero when savings fall below MSR threshold.</span></span>:</span>
+                                    <span style="color: #fca5a5;">$0</span>
                                 </div>
                             </div>
                         </div>
@@ -1368,7 +1368,7 @@
                     </div>
 
                     <!-- QUALITY MISS SCENARIO -->
-                    <div class="scenario-content" id="scenario-quality">
+                    <div class="scenario-content" id="scenario-quality" aria-live="polite">
                         <div class="result-banner warning">
                             Quality Gate Failed - Payout = $0
                         </div>
@@ -1394,7 +1394,7 @@
                                 </div>
                                 <div class="calculation-line total">
                                     <span>Result:</span>
-                                    <span style="color: #ef4444;"><strong>FAILED</strong> → ACO Share $0</span>
+                                    <span style="color: #fca5a5;"><strong>FAILED</strong> → ACO Share $0</span>
                                 </div>
                             </div>
                         </div>
@@ -1411,23 +1411,23 @@
                                             <span style="color: #10b981;">$<span id="qBankTotalSavings">50M</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>ACO Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer (typically 50-60%). The payer keeps the remainder.</span></span> (<span id="qBankAcoSharePct">50</span>%):</span>
+                                            <span>ACO Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer (typically 50-60%). The payer keeps the remainder.</span></span> (<span id="qBankAcoSharePct">50</span>%):</span>
                                             <span style="color: #10b981;">$<span id="qBankAcoShare">25M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses (care managers, IT, administrative staff).</span></span>:</span>
+                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses (care managers, IT, administrative staff).</span></span>:</span>
                                             <span style="color: #f59e0b;">−$<span id="qBankOpsRetention">2.1M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund for unexpected costs or future shortfalls.</span></span> (10%):</span>
+                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund for unexpected costs or future shortfalls.</span></span> (10%):</span>
                                             <span style="color: #f59e0b;">−$<span id="qBankReserve">2.5M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- Loan Budget <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds set aside from ACO share to cover 12 months of loan payments, ensuring debt service even if Year 2 performance drops.</span></span> (12 mo):</span>
+                                            <span>- Loan Budget <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds set aside from ACO share to cover 12 months of loan payments, ensuring debt service even if Year 2 performance drops.</span></span> (12 mo):</span>
                                             <span style="color: #f59e0b;">−$<span id="qBankLoanBudget">1.3M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions and partner shares.</span></span>:</span>
+                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions and partner shares.</span></span>:</span>
                                             <span style="color: #059669;"><strong>$<span id="qBankNetToPcps">19.1M</span></strong></span>
                                         </div>
                                         <div class="calculation-line" style="font-size: 0.9em; color: #666;">
@@ -1452,7 +1452,7 @@
                                             <span style="color: #fca5a5;"><strong>+$<span id="qBankAcoShareLost">25M</span></strong></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span><strong>Payer Total Windfall <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings instead of their usual share — a significant financial incentive.</span></span>:</strong></span>
+                                            <span><strong>Payer Total Windfall <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings instead of their usual share — a significant financial incentive.</span></span>:</strong></span>
                                             <span style="color: #f87171;"><strong>$<span id="qBankPayerWindfall">50M</span> (100%)</strong></span>
                                         </div>
                                     </div>
@@ -1526,7 +1526,7 @@
                                             <span>$<span id="qHospTargetSavings">50M</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>− Hospital Premium Effect <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Additional cost charged by hospital-based facilities compared to independent providers, reducing realized savings.</span></span>:</span>
+                                            <span>− Hospital Premium Effect <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Additional cost charged by hospital-based facilities compared to independent providers, reducing realized savings.</span></span>:</span>
                                             <span style="color: #fca5a5;">−$<span id="qHospPremiumCost">39.6M</span></span>
                                         </div>
                                         <div class="calculation-line" style="border-top: 1px dashed #ccc; padding-top: 8px;">
@@ -1538,19 +1538,19 @@
                                             <span style="color: #10b981;">$<span id="qHospAcoShare">5.2M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span>:</span>
+                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span>:</span>
                                             <span style="color: #f59e0b;">−$<span id="qHospOpsRetention">2.1M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
+                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
                                             <span style="color: #f59e0b;">−$<span id="qHospReserve">520K</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- Hospital Gain Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the hospital partner as their return on investment.</span></span> (<span id="qHospGainSharePct">50</span>%):</span>
+                                            <span>- Hospital Gain Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the hospital partner as their return on investment.</span></span> (<span id="qHospGainSharePct">50</span>%):</span>
                                             <span style="color: #f59e0b;">−$<span id="qHospGainShare">1.3M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
+                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
                                             <span style="color: #059669;"><strong>$<span id="qHospNetToPcps">1.3M</span></strong></span>
                                         </div>
                                         <div class="calculation-line" style="font-size: 0.9em; color: #666;">
@@ -1571,7 +1571,7 @@
                                             <span>$<span id="qHospRealizedSavings2">10.4M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span><strong>Payer Windfall <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings instead of their usual share.</span></span> (100%):</strong></span>
+                                            <span><strong>Payer Windfall <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings instead of their usual share.</span></span> (100%):</strong></span>
                                             <span style="color: #f87171;"><strong>$<span id="qHospPayerWindfall">10.4M</span></strong></span>
                                         </div>
                                     </div>
@@ -1670,19 +1670,19 @@
                                             <span style="color: #10b981;">$<span id="qPeAcoShare">25M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span>:</span>
+                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span>:</span>
                                             <span style="color: #f59e0b;">−$<span id="qPeOpsRetention">2.1M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
+                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
                                             <span style="color: #f59e0b;">−$<span id="qPeReserve">2.5M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- PE Gain Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the PE firm based on their equity ownership.</span></span> (<span id="qPeGainSharePct">50</span>%):</span>
+                                            <span>- PE Gain Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the PE firm based on their equity ownership.</span></span> (<span id="qPeGainSharePct">50</span>%):</span>
                                             <span style="color: #f59e0b;">−$<span id="qPeGainShare">10.2M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
+                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
                                             <span style="color: #059669;"><strong>$<span id="qPeNetToPcps">10.2M</span></strong></span>
                                         </div>
                                         <div class="calculation-line" style="font-size: 0.9em; color: #666;">
@@ -1707,7 +1707,7 @@
                                             <span style="color: #fca5a5;"><strong>+$<span id="qPeAcoShareLost">25M</span></strong></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span><strong>Payer Total Windfall <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings instead of their usual share.</span></span>:</strong></span>
+                                            <span><strong>Payer Total Windfall <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings instead of their usual share.</span></span>:</strong></span>
                                             <span style="color: #f87171;"><strong>$<span id="qPePayerWindfall">50M</span> (100%)</strong></span>
                                         </div>
                                     </div>
@@ -1778,19 +1778,19 @@
                                             <span style="color: #10b981;">$<span id="qPayerAcoShare">25M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span>:</span>
+                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span>:</span>
                                             <span style="color: #f59e0b;">−$<span id="qPayerOpsRetention">2.1M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
+                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
                                             <span style="color: #f59e0b;">−$<span id="qPayerReserve">2.5M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- Advance Deduction <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Amount subtracted from ACO share at reconciliation to repay the advance received during operations.</span></span>:</span>
+                                            <span>- Advance Deduction <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Amount subtracted from ACO share at reconciliation to repay the advance received during operations.</span></span>:</span>
                                             <span style="color: #f59e0b;">−$<span id="qPayerAdvanceDeduction">12M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
+                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
                                             <span style="color: #059669;"><strong>$<span id="qPayerNetToPcps">8.4M</span></strong></span>
                                         </div>
                                         <div class="calculation-line" style="font-size: 0.9em; color: #666;">
@@ -1815,11 +1815,11 @@
                                             <span style="color: #fca5a5;"><strong>+$<span id="qPayerAcoShareLost">25M</span></strong></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span style="color: #fca5a5;"><strong>+ Clawback Recovery <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Amount the ACO must repay to the payer after receiving advance payments and missing targets.</span></span>:</strong></span>
+                                            <span style="color: #fca5a5;"><strong>+ Clawback Recovery <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Amount the ACO must repay to the payer after receiving advance payments and missing targets.</span></span>:</strong></span>
                                             <span style="color: #fca5a5;"><strong>+$<span id="qPayerClawbackRecovery">13.5M</span></strong></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span><strong>Payer Total Windfall <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings plus claws back the advance.</span></span>:</strong></span>
+                                            <span><strong>Payer Total Windfall <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">When quality threshold is missed, the payer keeps 100% of savings plus claws back the advance.</span></span>:</strong></span>
                                             <span style="color: #f87171;"><strong>$<span id="qPayerPayerWindfall">63.5M</span></strong></span>
                                         </div>
                                     </div>
@@ -1885,7 +1885,7 @@
                     </div>
 
                     <!-- HIT TARGET SCENARIO -->
-                    <div class="scenario-content" id="scenario-hit">
+                    <div class="scenario-content" id="scenario-hit" aria-live="polite">
                         <div class="result-banner success" id="hit-target-banner">
                             ACO Hit the Target! - Saved <span id="savingsTargetHit">5</span>%
                         </div>
@@ -1907,11 +1907,11 @@
                                     <span style="color: #10b981;">$<span id="totalSavingsHit">50M</span></span>
                                 </div>
                                 <div class="calculation-line">
-                                    <span>Payer Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of savings the payer retains. This is the complement of ACO Share.</span></span> (<span id="payerShareHit">50</span>%):</span>
+                                    <span>Payer Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of savings the payer retains. This is the complement of ACO Share.</span></span> (<span id="payerShareHit">50</span>%):</span>
                                     <span>$<span id="payerShareAmountHit">25M</span></span>
                                 </div>
                                 <div class="calculation-line total">
-                                    <span><strong>ACO Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer (typically 50-60%). The payer keeps the remainder.</span></span> (<span id="acoSharePctHit">50</span>%):</strong></span>
+                                    <span><strong>ACO Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">The portion of savings the ACO receives from the payer (typically 50-60%). The payer keeps the remainder.</span></span> (<span id="acoSharePctHit">50</span>%):</strong></span>
                                     <span style="color: #10b981;"><strong>$<span id="acoShareHit">25M</span></strong></span>
                                 </div>
                             </div>
@@ -1926,19 +1926,19 @@
                                         <span>$<span id="bankGrossShare">25M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses (care managers, IT, administrative staff).</span></span> (Y2):</span>
+                                        <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses (care managers, IT, administrative staff).</span></span> (Y2):</span>
                                         <span style="color: #f59e0b;">−$<span id="bankOpsRetention">2.1M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund for unexpected costs or future shortfalls.</span></span> (10%):</span>
+                                        <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund for unexpected costs or future shortfalls.</span></span> (10%):</span>
                                         <span style="color: #f59e0b;">−$<span id="bankReserveRetention">2.5M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- Loan Budget <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds set aside from ACO share to cover 12 months of loan payments, ensuring debt service even if Year 2 performance drops.</span></span> (12 mo):</span>
+                                        <span>- Loan Budget <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds set aside from ACO share to cover 12 months of loan payments, ensuring debt service even if Year 2 performance drops.</span></span> (12 mo):</span>
                                         <span style="color: #f59e0b;">−$<span id="bankY1LoanRetentionHit">1.31M</span></span>
                                     </div>
                                     <div class="calculation-line total">
-                                        <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions and partner shares.</span></span>:</span>
+                                        <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions and partner shares.</span></span>:</span>
                                         <span style="color: #10b981;">$<span id="bankNetHit">19.1M</span></span>
                                     </div>
                                     <div class="calculation-line" style="font-size: 0.9em; color: #94a3b8;">
@@ -2071,23 +2071,23 @@
                                             <span>$<span id="hospitalGrossShare">5.2M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span> (Y2):</span>
+                                            <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span> (Y2):</span>
                                             <span style="color: #f59e0b;">−$<span id="hospitalOpsRetention">2.1M</span></span>
                                         </div>
                                         <div class="calculation-line" style="padding-left: 10px;">
-                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
+                                            <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
                                             <span style="color: #f59e0b;">−$<span id="hospitalReserveRetention">520K</span></span>
                                         </div>
                                         <div class="calculation-line" style="border-top: 1px dashed #555; padding-top: 8px;">
-                                            <span>Net Distributable <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Amount available for distribution after ACO retains operating funds and reserves.</span></span>:</span>
+                                            <span>Net Distributable <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Amount available for distribution after ACO retains operating funds and reserves.</span></span>:</span>
                                             <span>$<span id="hospitalNetDistributableDisplay">2.6M</span></span>
                                         </div>
                                         <div class="calculation-line">
-                                            <span>- Hospital Gain Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the hospital partner as their return on investment.</span></span> (<span id="hospitalGainShareHitPct">50</span>%):</span>
+                                            <span>- Hospital Gain Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the hospital partner as their return on investment.</span></span> (<span id="hospitalGainShareHitPct">50</span>%):</span>
                                             <span style="color: #fca5a5;">−$<span id="hospitalGainShareHit">1.3M</span></span>
                                         </div>
                                         <div class="calculation-line total">
-                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
+                                            <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
                                             <span style="color: #10b981;">$<span id="hospitalNetHit">1.3M</span></span>
                                         </div>
                                         <div class="calculation-line" style="font-size: 0.9em; color: #94a3b8;">
@@ -2153,23 +2153,23 @@
                                         <span>$<span id="peGrossShare">25M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span> (Y2):</span>
+                                        <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span> (Y2):</span>
                                         <span style="color: #f59e0b;">−$<span id="peOpsRetention">2.1M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
+                                        <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
                                         <span style="color: #f59e0b;">−$<span id="peReserveRetention">2.5M</span></span>
                                     </div>
                                     <div class="calculation-line" style="border-top: 1px dashed #555; padding-top: 8px;">
-                                        <span>Net Distributable <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Amount available for distribution after ACO retains operating funds and reserves.</span></span>:</span>
+                                        <span>Net Distributable <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Amount available for distribution after ACO retains operating funds and reserves.</span></span>:</span>
                                         <span>$<span id="peNetDistributable">20.4M</span></span>
                                     </div>
                                     <div class="calculation-line">
-                                        <span>- PE Gain Share <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the PE firm based on their equity ownership.</span></span> (<span id="peEquityHitPct">50</span>%):</span>
+                                        <span>- PE Gain Share <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Percentage of ACO net distributable savings paid to the PE firm based on their equity ownership.</span></span> (<span id="peEquityHitPct">50</span>%):</span>
                                         <span style="color: #fca5a5;">−$<span id="peShareHit">10.2M</span></span>
                                     </div>
                                     <div class="calculation-line total">
-                                        <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
+                                        <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
                                         <span style="color: #10b981;">$<span id="peNetHit">9.9M</span></span>
                                     </div>
                                     <div class="calculation-line" style="font-size: 0.9em; color: #94a3b8;">
@@ -2234,19 +2234,19 @@
                                         <span>$<span id="payerGrossShare">25M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span> (Y2):</span>
+                                        <span>- ACO Ops Retention <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Funds retained by the ACO entity to cover Year 2 operating expenses.</span></span> (Y2):</span>
                                         <span style="color: #f59e0b;">−$<span id="payerOpsRetention">2.1M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
+                                        <span>- ACO Reserve <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">10% safety buffer held back from distributions as a contingency fund.</span></span> (10%):</span>
                                         <span style="color: #f59e0b;">−$<span id="payerReserveRetention">2.5M</span></span>
                                     </div>
                                     <div class="calculation-line" style="padding-left: 10px;">
-                                        <span>- Advance Deduction <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Amount subtracted from ACO share at reconciliation to repay the advance received during operations.</span></span> (Year 1 PMPM):</span>
+                                        <span>- Advance Deduction <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Amount subtracted from ACO share at reconciliation to repay the advance received during operations.</span></span> (Year 1 PMPM):</span>
                                         <span style="color: #f59e0b;">−$<span id="payerAdvanceDeductionHit">12M</span></span>
                                     </div>
                                     <div class="calculation-line total">
-                                        <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
+                                        <span>Net to PCPs <span class="tooltip-container"><span class="tooltip-icon" tabindex="0" role="button">i</span><span class="tooltip-text">Final amount distributed to participating physicians after all deductions.</span></span>:</span>
                                         <span style="color: #10b981;">$<span id="payerNetHit">8.4M</span></span>
                                     </div>
                                     <div class="calculation-line" style="font-size: 0.9em; color: #94a3b8;">
@@ -2441,7 +2441,7 @@
                     </div>
                     <div class="slider-group-content">
                         <div class="slider-row">
-                            <div class="slider-label">Years to Project</div>
+                            <label for="multiYearCount" class="slider-label">Years to Project</label>
                             <div class="slider-container">
                                 <input type="range" id="multiYearCount" min="1" max="20" step="1" value="10" oninput="updateAssumption('multiYearCount', this.value)">
                                 <div class="slider-value"><span id="multiYearCountDisplay">10</span> years</div>
@@ -2458,13 +2458,13 @@
                     </div>
                     <div class="slider-group-content">
                         <div class="slider-row" id="hospitalPremiumGrowthRow" style="display: none;">
-                            <div class="slider-label">
+                            <label for="hospitalPremiumGrowthPct" class="slider-label">
                                 Hospital Premium Growth
                                 <span class="tooltip-container">
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Annual growth rate of hospital premium costs. Only applies when Hospital funding is selected.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="hospitalPremiumGrowthPct" min="0" max="10" step="0.5" value="2" oninput="updateAssumption('hospitalPremiumGrowthPct', this.value)">
                                 <div class="slider-value"><span id="hospitalPremiumGrowthPctDisplay">2.0</span>%</div>
@@ -2474,13 +2474,13 @@
                         <!-- Payer Parameters (visible only when payer funding selected) -->
                         <div id="step6PayerParams" style="display: none;">
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="step6PayerPmpm" class="slider-label">
                                     PMPM Advance ($)
                                     <span class="tooltip-container">
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">Per-member-per-month advance from the payer. Higher amounts provide more upfront cash flow but increase clawback risk if targets are missed.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="step6PayerPmpm" min="1" max="20" step="1" value="10" oninput="updateAssumption('payerPmpm', this.value)">
                                     <div class="slider-value">$<span id="step6PayerPmpmDisplay">10</span></div>
@@ -2488,13 +2488,13 @@
                             </div>
 
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="step6PayerClawbackPct" class="slider-label">
                                     Clawback % (if missed)
                                     <span class="tooltip-container">
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">Percentage of the 18-month advance that must be repaid if the ACO misses its savings target. 100% means full repayment required.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="step6PayerClawbackPct" min="0" max="100" step="5" value="75" oninput="updateAssumption('payerClawbackPct', this.value)">
                                     <div class="slider-value"><span id="step6PayerClawbackPctDisplay">75</span>%</div>
@@ -2502,13 +2502,13 @@
                             </div>
 
                             <div class="slider-row">
-                                <div class="slider-label">
+                                <label for="step6PayerPmpmRatchet" class="slider-label">
                                     Annual PMPM Ratchet
                                     <span class="tooltip-container">
-                                        <span class="tooltip-icon">i</span>
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                         <span class="tooltip-text">How much the PMPM advance decreases each year. Payers often reduce prospective payments as ACOs are expected to become self-sustaining.</span>
                                     </span>
-                                </div>
+                                </label>
                                 <div class="slider-container">
                                     <input type="range" id="step6PayerPmpmRatchet" min="0" max="100" step="5" value="75" oninput="updateAssumption('payerPmpmRatchet', this.value)">
                                     <div class="slider-value"><span id="step6PayerPmpmRatchetDisplay">75</span>%</div>
@@ -2526,27 +2526,27 @@
                     </div>
                     <div class="slider-group-content">
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="multiYearSavingsTargetPct" class="slider-label">
                                 Target Savings %
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">The savings percentage target in the ACO contract. Adjusting this simulates renegotiating a more or less aggressive target.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
-                            <input type="range" id="multiYearSavingsTargetPct" min="1" max="10" step="0.5" value="5" oninput="updateAssumption('multiYearSavingsTargetPct', this.value)">
+                            <input type="range" id="multiYearSavingsTargetPct" min="0.5" max="10" step="0.5" value="5" oninput="updateAssumption('multiYearSavingsTargetPct', this.value)">
                             <div class="slider-value"><span id="multiYearSavingsTargetPctDisplay">5.0</span>%</div>
                         </div>
                     </div>
 
                     <div class="slider-row">
-                        <div class="slider-label">
+                        <label for="multiYearMsrPct" class="slider-label">
                             MSR (Min. Savings Rate)
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">Minimum Savings Rate threshold. Below this, the ACO receives $0 payout. Lower MSR = easier to qualify for payouts.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="multiYearMsrPct" min="0" max="5" step="0.5" value="1.5" oninput="updateAssumption('multiYearMsrPct', this.value)">
                             <div class="slider-value"><span id="multiYearMsrPctDisplay">1.5</span>%</div>
@@ -2554,13 +2554,13 @@
                     </div>
 
                     <div class="slider-row">
-                        <div class="slider-label">
+                        <label for="benchmarkRatchetPct" class="slider-label">
                             Benchmark Ratchet
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">Percentage of savings "baked into" next year's benchmark. Higher ratchet = faster benchmark decline = sooner ACO runs out of room to generate savings.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="benchmarkRatchetPct" min="0" max="5" step="0.5" value="1" oninput="updateAssumption('benchmarkRatchetPct', this.value)">
                             <div class="slider-value"><span id="benchmarkRatchetPctDisplay">1.0</span>%</div>
@@ -2581,13 +2581,13 @@
                         </p>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6AcoBaseRaf" class="slider-label">
                                 <span class="tooltip-container">
                                     ACO Starting RAF
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">ACO's baseline RAF score reflecting documented health complexity. 1.0 = average; higher = sicker/better documented patients.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6AcoBaseRaf" min="0.8" max="1.5" step="0.05" value="1.0" oninput="updateAssumption('acoBaseRaf', parseFloat(this.value))">
                                 <div class="slider-value"><span id="step6AcoBaseRafDisplay">1.00</span></div>
@@ -2595,13 +2595,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6RegionalBaseRaf" class="slider-label">
                                 <span class="tooltip-container">
                                     Regional Market RAF
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Regional market's average RAF score. Used as comparison baseline for benchmark adjustment.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6RegionalBaseRaf" min="0.8" max="1.5" step="0.05" value="1.0" oninput="updateAssumption('regionalBaseRaf', parseFloat(this.value))">
                                 <div class="slider-value"><span id="step6RegionalBaseRafDisplay">1.00</span></div>
@@ -2609,13 +2609,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6AcoRafGrowthPct" class="slider-label">
                                 <span class="tooltip-container">
                                     ACO Annual RAF Growth %
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Annual improvement in ACO's RAF through HCC documentation optimization ("coding").</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6AcoRafGrowthPct" min="0" max="15" step="1" value="5" oninput="updateAssumption('acoRafGrowthPct', parseFloat(this.value))">
                                 <div class="slider-value"><span id="step6AcoRafGrowthPctDisplay">5</span>%</div>
@@ -2623,13 +2623,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6RegionalRafGrowthPct" class="slider-label">
                                 <span class="tooltip-container">
                                     Regional Annual RAF Growth %
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">How fast competitors improve their RAF. If market grows faster, ACO's relative position erodes.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6RegionalRafGrowthPct" min="0" max="10" step="1" value="3" oninput="updateAssumption('regionalRafGrowthPct', parseFloat(this.value))">
                                 <div class="slider-value"><span id="step6RegionalRafGrowthPctDisplay">3</span>%</div>
@@ -2637,13 +2637,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6RafOptimizationPeakYear" class="slider-label">
                                 <span class="tooltip-container">
                                     RAF Optimized by Year
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Year by which most coding optimization gains are realized. After this year, RAF growth slows toward the ongoing rate.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6RafOptimizationPeakYear" min="1" max="5" step="1" value="3" oninput="updateAssumption('rafOptimizationPeakYear', parseFloat(this.value))">
                                 <div class="slider-value">Year <span id="step6RafOptimizationPeakYearDisplay">3</span></div>
@@ -2651,13 +2651,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6RafOptimizationFloor" class="slider-label">
                                 <span class="tooltip-container">
                                     RAF Growth After Optimization
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">Annual RAF growth rate after optimization peaks. Represents ongoing opportunity from patient turnover.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6RafOptimizationFloor" min="0" max="5" step="0.5" value="1" oninput="updateAssumption('rafOptimizationFloor', parseFloat(this.value))">
                                 <div class="slider-value"><span id="step6RafOptimizationFloorDisplay">1.0</span>%</div>
@@ -2665,13 +2665,13 @@
                         </div>
 
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step6CodingIntensityCap" class="slider-label">
                                 <span class="tooltip-container">
                                     Coding Intensity Cap %
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">CMS-style limit on annual RAF growth to prevent excessive upcoding. Typically 3-6% per year.</span>
                                 </span>
-                            </div>
+                            </label>
                             <div class="slider-container">
                                 <input type="range" id="step6CodingIntensityCap" min="0" max="10" step="1" value="3" oninput="updateAssumption('codingIntensityCap', parseFloat(this.value))">
                                 <div class="slider-value"><span id="step6CodingIntensityCapDisplay">3</span>%</div>
@@ -2682,7 +2682,7 @@
                             <div class="slider-label">
                                 <span class="tooltip-container">
                                     Regional RAF Also Saturates
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">When enabled, the regional market's RAF growth also slows after the optimization year (optimistic scenario). When disabled, competitors grow at a constant rate indefinitely (pessimistic/default).</span>
                                 </span>
                             </div>
@@ -2704,13 +2704,13 @@
                     </div>
                     <div class="slider-group-content">
                         <div class="slider-row">
-                            <div class="slider-label">
+                            <label for="step5AcoStartingQualityPct" class="slider-label">
                                 Starting Quality Score
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">ACO's baseline quality score in Year 1, before improvement efforts take effect. Should be at or above the Quality Gate to pass Year 1.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="step5AcoStartingQualityPct" min="50" max="95" step="1" value="80" oninput="updateAssumption('acoStartingQualityPct', this.value)">
                             <div class="slider-value"><span id="step5AcoStartingQualityPctDisplay">80</span>%</div>
@@ -2718,13 +2718,13 @@
                     </div>
 
                     <div class="slider-row">
-                        <div class="slider-label">
+                        <label for="acoQualityImprovementPct" class="slider-label">
                             ACO Quality Improvement Pace
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">How many percentage points the ACO can improve its quality score each year through care coordination, patient engagement, and process improvements.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="acoQualityImprovementPct" min="0" max="10" step="0.5" value="3" oninput="updateAssumption('acoQualityImprovementPct', this.value)">
                             <div class="slider-value"><span id="acoQualityImprovementPctDisplay">3.0</span>%</div>
@@ -2732,13 +2732,13 @@
                     </div>
 
                     <div class="slider-row">
-                        <div class="slider-label">
+                        <label for="qualityGateRatchetPct" class="slider-label">
                             Quality Gate Ratchet
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">How much the quality gate increases each year. Higher ratchet = faster rising bar for quality requirements.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="qualityGateRatchetPct" min="0" max="10" step="1" value="2" oninput="updateAssumption('qualityGateRatchetPct', this.value)">
                             <div class="slider-value"><span id="qualityGateRatchetPctDisplay">2.0</span>%</div>
@@ -2746,26 +2746,26 @@
                     </div>
 
                     <div class="slider-row">
-                        <div class="slider-label">
+                        <label for="acoMaxQualityPct" class="slider-label">
                             Maximum Achievable Quality
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">The ceiling on quality scores. Perfection is unrealistic due to patient non-compliance, documentation limitations, and measurement methodology. Once the ACO hits this ceiling, further improvement is not possible.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="acoMaxQualityPct" min="80" max="100" step="1" value="90" oninput="updateAssumption('acoMaxQualityPct', this.value)">
                             <div class="slider-value"><span id="acoMaxQualityPctDisplay">90</span>%</div>
                         </div>
                     </div>
                     <div class="slider-row">
-                        <div class="slider-label">
+                        <label for="qualityGateCeiling" class="slider-label">
                             Quality Gate Ceiling
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">Maximum quality threshold the payer can require. Prevents quality gates from ratcheting to impossible levels. Once the gate reaches this ceiling, it stops increasing.</span>
                             </span>
-                        </div>
+                        </label>
                         <div class="slider-container">
                             <input type="range" id="qualityGateCeiling" min="0" max="100" step="1" value="95" oninput="updateAssumption('qualityGateCeiling', this.value)">
                             <div class="slider-value"><span id="qualityGateCeilingDisplay">95</span>%</div>
@@ -2785,7 +2785,7 @@
                     </div>
                     <div class="slider-group-content">
                         <div class="slider-row">
-                            <div class="slider-label">Annual Inflation</div>
+                            <label for="inflationPct" class="slider-label">Annual Inflation</label>
                         <div class="slider-container">
                             <input type="range" id="inflationPct" min="0" max="10" step="0.5" value="3" oninput="updateAssumption('inflationPct', this.value)">
                             <div class="slider-value"><span id="inflationPctDisplay">3.0</span>%</div>
@@ -2811,7 +2811,7 @@
                                 <input type="checkbox" id="applyInflationToRatchet" onchange="updateAssumption('applyInflationToRatchet', this.checked)">
                                 <span style="font-size: 0.9em;">Apply to Ratchet</span>
                                 <span class="tooltip-container">
-                                    <span class="tooltip-icon">i</span>
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                     <span class="tooltip-text">When checked, inflation is applied to the benchmark before ratcheting. This slightly counteracts the ratchet effect, slowing the benchmark decline.</span>
                                 </span>
                             </label>
@@ -2921,7 +2921,7 @@
                 </div>
 
                 <!-- Summary Stats (after table) - hidden in MC view -->
-                <div id="multiYearSummaryStats">
+                <div id="multiYearSummaryStats" aria-live="polite">
                 <p style="margin: 25px 0 10px 0; color: #64748b; font-size: 0.9em;">
                     <strong><span id="multiYearCountExplainer">5</span>-Year Summary</strong> — adjust projection years in the Financial view.
                 </p>
@@ -2930,7 +2930,7 @@
                         <div class="stat-label">
                             Total Net to PCPs
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">Total ACO payout distributed to PCPs across all projected years, after ACO retention and partner shares</span>
                             </span>
                         </div>
@@ -2940,7 +2940,7 @@
                         <div class="stat-label">
                             Years with Payout
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">Number of years where ACO received shared savings (passed both TCOC and Quality thresholds)</span>
                             </span>
                         </div>
@@ -2950,7 +2950,7 @@
                         <div class="stat-label">
                             Net After Burden
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
                                 <span class="tooltip-text">Total Net to PCPs minus Total Practice Burden — the real bottom line after accounting for what practices sacrifice</span>
                             </span>
                         </div>
@@ -2958,10 +2958,10 @@
                     </div>
                     <div class="stat-card" id="multiYearAvgPerPcpCard">
                         <div class="stat-label">
-                            Avg Per PCP
+                            Avg/yr per PCP
                             <span class="tooltip-container">
-                                <span class="tooltip-icon">i</span>
-                                <span class="tooltip-text" style="left: auto; right: 0;">Net After Burden divided by number of PCPs — what each PCP actually gains (or loses) on average over the projection period</span>
+                                <span class="tooltip-icon" tabindex="0" role="button">i</span>
+                                <span class="tooltip-text" style="left: auto; right: 0;">Net After Burden divided by number of PCPs divided by completed years — what each PCP actually gains (or loses) per year on average over the projection period</span>
                             </span>
                         </div>
                         <div class="stat-value" id="multiYearAvgPerPcp">$0</div>
@@ -3870,7 +3870,7 @@
                     </div>
 
                     <!-- Year 1 Results Section -->
-                    <div class="mc-results" id="mcResults" style="display: none;">
+                    <div class="mc-results" id="mcResults" style="display: none;" aria-live="polite">
                         <!-- View Toggle -->
                         <div class="mc-view-toggle">
                             <button class="mc-view-btn active" id="mcViewSharedSavings" onclick="setMonteCarloView('sharedSavings')">Shared Savings</button>
@@ -3965,7 +3965,7 @@
                     </div>
 
                     <!-- Multi-Year Results Section -->
-                    <div id="myMcResults" style="display: none;">
+                    <div id="myMcResults" style="display: none;" aria-live="polite">
                         <!-- View Toggle -->
                         <div class="mc-view-toggle">
                             <button class="mc-view-btn active" id="myMcViewSharedSavings" onclick="setMultiYearMonteCarloView('sharedSavings')">Shared Savings</button>

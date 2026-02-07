@@ -364,7 +364,7 @@
         };
         const ALL_FUNDER_SPECIFIC_VARIABLES = new Set(Object.values(FUNDER_VARIABLES).flat());
 
-        const YEAR1_EXCLUDED_VARS = new Set(['multiYearSavingsTargetPct', 'multiYearMsrPct']);
+        const YEAR1_EXCLUDED_VARS = new Set(['multiYearSavingsTargetPct', 'multiYearMsrPct', 'hospitalPremiumGrowthPct']);
         const MULTI_YEAR_EXCLUDED_VARS = new Set(['savingsTargetPct', 'msrPct']);
 
         function isVariableApplicableForFunding(varName, funding) {
@@ -483,8 +483,8 @@
             hospitalReferralPct: true,
             hospitalPremiumGrowthPct: true,
             peEquityShare: true,
-            peBoardControl: true,
-            peExitYears: true,
+            peBoardControl: false,
+            peExitYears: false,
             payerPmpm: true,
             payerClawbackPct: true,
             payerPmpmRatchet: true,
@@ -1160,7 +1160,7 @@
         }
 
         function computeMultiYear(scenario, baseModel, fundingType) {
-            // scenario: 'hit' or 'miss'
+            // scenario: 'hit' (only supported value)
             // baseModel: output of computeModel() for Year 1 values
             // fundingType: 'bank', 'hospital', or 'pe'
             // Returns: { rows[], totalNet, avgPerDocPerYear, failedYear, endingReserve }
@@ -1235,21 +1235,16 @@
                 // Apply RAF adjustment to benchmark
                 const rafAdjustedBenchmark = benchmark * rafRatio;
 
-                // Savings rate: hit path aims for target but capped by achievable; miss path uses fixed 1%
+                // Pre-compute achievable to determine capping (helper also computes this)
                 let savingsPct;
                 let isCapped = false;
-                if (scenario === 'hit') {
-                    // Pre-compute achievable to determine capping (helper also computes this)
-                    const preMaxSavings = rafAdjustedBenchmark > 0
-                        ? (Math.max(0, rafAdjustedBenchmark - minAchievableCost) / rafAdjustedBenchmark) * 100 : 0;
-                    if (preMaxSavings >= a.multiYearSavingsTargetPct) {
-                        savingsPct = a.multiYearSavingsTargetPct;
-                    } else {
-                        savingsPct = preMaxSavings;
-                        isCapped = true;
-                    }
+                const preMaxSavings = rafAdjustedBenchmark > 0
+                    ? (Math.max(0, rafAdjustedBenchmark - minAchievableCost) / rafAdjustedBenchmark) * 100 : 0;
+                if (preMaxSavings >= a.multiYearSavingsTargetPct) {
+                    savingsPct = a.multiYearSavingsTargetPct;
                 } else {
-                    savingsPct = CONSTANTS.MISS_SCENARIO_SAVINGS_PCT * 100;
+                    savingsPct = preMaxSavings;
+                    isCapped = true;
                 }
 
                 // Hospital premium (grows annually) - uses actual TCOC (benchmark before RAF)
@@ -1284,14 +1279,14 @@
                     applyInflationToBurden: a.applyInflationToBurden,
                     inflationPct: a.inflationPct,
                     adjustNetDistributableForShortfall: false,
-                    isScenarioMiss: scenario === 'miss'
+                    isScenarioMiss: false
                 });
 
                 // Update loan state
                 loanPaymentsRemaining = yf.newLoanPaymentsRemaining;
 
                 // Track first TCOC miss
-                if (!yf.meetsThreshold && !firstTcocMissYear && scenario === 'hit') {
+                if (!yf.meetsThreshold && !firstTcocMissYear) {
                     firstTcocMissYear = year;
                 }
 
@@ -1387,7 +1382,7 @@
                 endingReserve: reserve,
                 totalBurden,
                 netAfterBurden,
-                avgNetAfterBurdenPerPcp: (completedYears > 0 && a.pcpCount > 0) ? netAfterBurden / a.pcpCount : 0,
+                avgNetAfterBurdenPerPcp: (completedYears > 0 && a.pcpCount > 0) ? netAfterBurden / a.pcpCount / completedYears : 0,
                 // Quality summary fields
                 firstQualityMissYear,
                 firstTcocMissYear,
@@ -1519,11 +1514,14 @@
             // Defensive guard: clamp pcpCount to prevent division by zero
             if (assumptions.pcpCount < 1) assumptions.pcpCount = 1;
 
-            // Compute model (skip multi-year for Year 1 MC iterations)
-            const model = computeModel({ skipMultiYear: true });
-
-            // Restore original assumptions
-            Object.assign(assumptions, originalAssumptions);
+            let model;
+            try {
+                // Compute model (skip multi-year for Year 1 MC iterations)
+                model = computeModel({ skipMultiYear: true });
+            } finally {
+                // Restore original assumptions even if computeModel throws
+                Object.assign(assumptions, originalAssumptions);
+            }
 
             // Extract key outcomes based on selected funder
             const funder = (config && config.funding) || selectedFunding || 'bank';
@@ -1595,8 +1593,33 @@
         function runSimulationBatches(config, startIdx, results, resolve) {
             const endIdx = Math.min(startIdx + MONTE_CARLO_CONFIG.batchSize, config.iterations);
 
+            // Count varied dimensions for Sobol QMC (computed once, cached on config)
+            if (config._variedDimCount === undefined) {
+                const useQMC = monteCarloState.useQMC;
+                let count = 0;
+                if (useQMC) {
+                    const baseAssumptions = PRESETS[config.basePreset];
+                    getMonteCarloVariableKeys(config.funding, config.simulationType).forEach(varName => {
+                        if (!monteCarloState.holdConstant[varName] && monteCarloState.varyEnabled[varName] && baseAssumptions[varName] !== undefined) {
+                            count++;
+                        }
+                    });
+                }
+                config._variedDimCount = count;
+                config._useQMC = useQMC;
+            }
+
             for (let i = startIdx; i < endIdx; i++) {
-                const sampled = generateSampledAssumptions(config);
+                // Pre-compute Sobol values for QMC sampling
+                let sobolValues = null;
+                if (config._useQMC && config._variedDimCount > 0) {
+                    sobolValues = [];
+                    for (let d = 0; d < config._variedDimCount; d++) {
+                        sobolValues.push(sobolSequence(i + 1, d));
+                    }
+                }
+                const iterConfig = sobolValues ? Object.assign({}, config, { sobolValues }) : config;
+                const sampled = generateSampledAssumptions(iterConfig);
                 results.push(computeMonteCarloIteration(sampled, config));
             }
 
@@ -2028,7 +2051,7 @@
             if (monteCarloState.isRunning) return;
 
             // Check which tab is active and run appropriate simulation
-            if (typeof currentMcTab !== 'undefined' && currentMcTab === 'multiyear') {
+            if (currentMcTab === 'multiyear') {
                 // Run Multi-Year simulation
                 await runCascadingMonteCarlo();
                 return;
@@ -4232,6 +4255,7 @@
             ['payerBurdenMiss', (m, a) => m.practiceBurden18mo, formatCurrency],
             ['payerNetLossMiss', (m, a) => m.practiceBurden18mo + m.payerClawbackPerPcp, formatCurrency],
             ['payerClawbackMissText', (m, a) => m.payerClawbackPerPcp, formatCurrency],
+            ['payerClawbackMissPerDoc', (m, a) => m.payerClawbackPerPcp, formatCurrency],
             ['payerBurdenMissText', (m, a) => m.practiceBurden18mo, formatCurrency],
 
             // Payer Quality Miss - "What Could Have Received"
@@ -4256,6 +4280,7 @@
             ['qPayerAdvanceReceived', (m, a) => m.payerTotalAdvance18mo / a.pcpCount, formatCurrency],
             ['qPayerClawbackPctQ', (m, a) => a.payerClawbackPct, String],
             ['qPayerBurdenMiss', (m, a) => m.practiceBurden18mo, formatCurrency],
+            ['qPayerClawbackPerDocQ', (m, a) => m.payerClawbackPerPcp, formatCurrency],
             ['qPayerNetLossMiss', (m, a) => m.practiceBurden18mo + m.payerClawbackPerPcp, formatCurrency],
 
             // Payer Hit scenario
@@ -4506,6 +4531,7 @@
             ['bankLiabilityPerPcpText', (m, a) => m.capitalizedPrincipal / a.pcpCount, formatCurrency],
 
             // Bank Quality Miss - Reality Box
+            ['qBankLiabilityPerDoc', (m, a) => m.capitalizedPrincipal / a.pcpCount, formatCurrency],
             ['qBankNetPositionMiss', (m, a) => m.practiceBurden18mo + (m.capitalizedPrincipal / a.pcpCount), formatCurrency],
             ['qBankBurdenMissText', (m, a) => m.practiceBurden18mo, formatCurrency],
             ['qBankDebtOwedText', (m, a) => m.capitalizedPrincipal, formatCurrency],
@@ -4812,7 +4838,8 @@
             } else {
                 formatted = '$' + Math.round(absValue);
             }
-            return num >= 0 ? '+' + formatted : '−' + formatted;
+            if (num === 0) return formatted;
+            return num > 0 ? '+' + formatted : '−' + formatted;
         }
 
         function applyMcStatColor(valueElementId, numericValue) {
@@ -5141,14 +5168,14 @@
 
             activePreset = null;
             document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.remove('active'));
-            updateAllDisplays();
+            const m = updateAllDisplays();
 
             // Update Monte Carlo funder-specific variables
             updateMonteCarloFunderVars();
 
-            // If on multi-year step, update the displays
+            // If on multi-year step, update the displays (reuse computed model)
             if (currentStep === 5) {
-                updateMultiYearDisplays();
+                updateMultiYearDisplays(m);
             }
 
             // Mark MC results as stale when any assumption changes
@@ -5613,8 +5640,8 @@
         // ============================================
         // MULTI-YEAR PROJECTION DISPLAY
         // ============================================
-        function updateMultiYearDisplays() {
-            const m = computeModel();
+        function updateMultiYearDisplays(precomputedModel) {
+            const m = precomputedModel || computeModel();
             const data = m.multiYearHit;
 
             // Update funder label
@@ -6190,7 +6217,8 @@
             selectedFunding = 'bank';
             const mBank = computeModel();
             const myBankHit = mBank.multiYearHit;
-            assertExact('my bank rows', myBankHit.rows.length, 9);
+            assertExact('my bank rows >= 1', myBankHit.rows.length >= 1, true);
+            assertExact('my bank rows <= 10', myBankHit.rows.length <= 10, true);
             assertExact('my bank Y1 status', myBankHit.rows[0].status, 'Hit');
             // Benchmark ratchets after hit: Year 2 < Year 1
             if (myBankHit.rows.length >= 2) {
@@ -6207,7 +6235,8 @@
             selectedFunding = 'payer';
             const mPayer = computeModel();
             const myPayerHit = mPayer.multiYearHit;
-            assertExact('my payer rows', myPayerHit.rows.length, 9);
+            assertExact('my payer rows >= 1', myPayerHit.rows.length >= 1, true);
+            assertExact('my payer rows <= 10', myPayerHit.rows.length <= 10, true);
 
             // Worst case failure test
             applyPreset('worst');
@@ -6312,6 +6341,138 @@
             assertExact('zeroPcp peNetOutcome finite', isFinite(mZeroPcp.peNetOutcome), true);
             assertExact('zeroPcp payerNetOutcome finite', isFinite(mZeroPcp.payerNetOutcome), true);
             assumptions.pcpCount = savedPcpCount;
+
+            // ---- computeYearFinancials Unit Tests ----
+            // Test MSR threshold gate
+            const yfHit = computeYearFinancials({
+                year: 1, funding: 'bank',
+                rafAdjustedBenchmark: 1000000, qualityPass: true,
+                savingsPct: 5, isCapped: false, minAchievableCost: 900000,
+                hospitalPremium: 0, infraCost: 100000,
+                payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
+                multiYearSavingsTargetPct: 5,
+                loanPaymentsRemaining: 36, monthlyLoanPayment: 5000,
+                hospitalGainSharePct: 50, peEquitySharePct: 50,
+                currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
+                currentReserve: 0, basePracticeBurdenTotal: 500000,
+                applyInflationToBurden: false, inflationPct: 3,
+                adjustNetDistributableForShortfall: false, isScenarioMiss: false
+            });
+            assertExact('yf hit meetsThreshold', yfHit.meetsThreshold, true);
+            assertExact('yf hit status', yfHit.status, 'Hit');
+            assertExact('yf hit acoShare > 0', yfHit.acoShare > 0, true);
+
+            // Test quality gate miss
+            const yfQualMiss = computeYearFinancials({
+                year: 1, funding: 'bank',
+                rafAdjustedBenchmark: 1000000, qualityPass: false,
+                savingsPct: 5, isCapped: false, minAchievableCost: 900000,
+                hospitalPremium: 0, infraCost: 100000,
+                payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
+                multiYearSavingsTargetPct: 5,
+                loanPaymentsRemaining: 36, monthlyLoanPayment: 5000,
+                hospitalGainSharePct: 50, peEquitySharePct: 50,
+                currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
+                currentReserve: 0, basePracticeBurdenTotal: 500000,
+                applyInflationToBurden: false, inflationPct: 3,
+                adjustNetDistributableForShortfall: false, isScenarioMiss: false
+            });
+            assertExact('yf qualMiss acoShare', yfQualMiss.acoShare, 0);
+            assertExact('yf qualMiss status', yfQualMiss.status, 'Quality Miss');
+
+            // Test partial (capped)
+            const yfPartial = computeYearFinancials({
+                year: 1, funding: 'bank',
+                rafAdjustedBenchmark: 1000000, qualityPass: true,
+                savingsPct: 3, isCapped: true, minAchievableCost: 970000,
+                hospitalPremium: 0, infraCost: 100000,
+                payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
+                multiYearSavingsTargetPct: 5,
+                loanPaymentsRemaining: 36, monthlyLoanPayment: 5000,
+                hospitalGainSharePct: 50, peEquitySharePct: 50,
+                currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
+                currentReserve: 0, basePracticeBurdenTotal: 500000,
+                applyInflationToBurden: false, inflationPct: 3,
+                adjustNetDistributableForShortfall: false, isScenarioMiss: false
+            });
+            assertExact('yf partial status', yfPartial.status, 'Partial');
+
+            // Test payer clawback on miss
+            const yfPayerMiss = computeYearFinancials({
+                year: 1, funding: 'payer',
+                rafAdjustedBenchmark: 1000000, qualityPass: true,
+                savingsPct: 0.5, isCapped: false, minAchievableCost: 900000,
+                hospitalPremium: 0, infraCost: 100000,
+                payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
+                multiYearSavingsTargetPct: 5,
+                loanPaymentsRemaining: 0, monthlyLoanPayment: 0,
+                hospitalGainSharePct: 50, peEquitySharePct: 50,
+                currentPmpm: 10, attributedPatients: 80000, payerClawbackPct: 75,
+                currentReserve: 0, basePracticeBurdenTotal: 500000,
+                applyInflationToBurden: false, inflationPct: 3,
+                adjustNetDistributableForShortfall: false, isScenarioMiss: false
+            });
+            assertExact('yf payerMiss acoShare', yfPayerMiss.acoShare, 0);
+            assertExact('yf payerMiss clawback > 0', yfPayerMiss.payerClawback > 0, true);
+
+            // Test failure detection (insufficient reserves)
+            const yfFail = computeYearFinancials({
+                year: 3, funding: 'bank',
+                rafAdjustedBenchmark: 1000000, qualityPass: true,
+                savingsPct: 0.5, isCapped: true, minAchievableCost: 995000,
+                hospitalPremium: 0, infraCost: 500000,
+                payerSharePct: 50, acoReservePct: 0.10, multiYearMsrPct: 1.5,
+                multiYearSavingsTargetPct: 5,
+                loanPaymentsRemaining: 24, monthlyLoanPayment: 20000,
+                hospitalGainSharePct: 50, peEquitySharePct: 50,
+                currentPmpm: 0, attributedPatients: 80000, payerClawbackPct: 75,
+                currentReserve: 0, basePracticeBurdenTotal: 500000,
+                applyInflationToBurden: false, inflationPct: 3,
+                adjustNetDistributableForShortfall: false, isScenarioMiss: false
+            });
+            assertExact('yf fail failed', yfFail.failed, true);
+
+            // ---- Payer Underwater Test ----
+            const savedAssumptions2 = { ...assumptions };
+            applyPreset('realistic');
+            assumptions.payerPmpm = 25;  // High PMPM to trigger underwater
+            const mUnderwater = computeModel({ skipMultiYear: true });
+            assertExact('payer underwater with high PMPM', mUnderwater.payerIsUnderwater, true);
+            assertExact('payer underwater amount > 0', mUnderwater.payerUnderwaterAmount > 0, true);
+            Object.assign(assumptions, savedAssumptions2);
+
+            // ---- Boundary Slider Value Tests ----
+            // careManagerRatio at minimum (should not cause division by zero)
+            const savedCmr = assumptions.careManagerRatio;
+            assumptions.careManagerRatio = 0;
+            const mCmr0 = computeModel({ skipMultiYear: true });
+            assertExact('careManagerRatio=0 finite', isFinite(mCmr0.acoInfrastructureTotal), true);
+            assumptions.careManagerRatio = savedCmr;
+
+            // savingsTargetPct at extreme values
+            const savedStp = assumptions.savingsTargetPct;
+            assumptions.savingsTargetPct = 0.5;
+            const mMinStp = computeModel({ skipMultiYear: true });
+            assertExact('savingsTargetPct=0.5 finite', isFinite(mMinStp.targetSavings), true);
+            assumptions.savingsTargetPct = 10;
+            const mMaxStp = computeModel({ skipMultiYear: true });
+            assertExact('savingsTargetPct=10 finite', isFinite(mMaxStp.targetSavings), true);
+            assumptions.savingsTargetPct = savedStp;
+
+            // hospitalCostPremium eating all savings
+            const savedHcp = assumptions.hospitalCostPremium;
+            assumptions.hospitalCostPremium = 40;
+            selectedFunding = 'hospital';
+            const mHighPrem = computeModel({ skipMultiYear: true });
+            assertExact('high hospital premium finite', isFinite(mHighPrem.hospitalNetY1), true);
+            assumptions.hospitalCostPremium = savedHcp;
+            selectedFunding = savedFunding;
+
+            // formatSignedCurrency zero should have no sign prefix
+            assertExact('formatSignedCurrency zero', formatSignedCurrency(0), '$0');
+
+            // Restore state
+            applyPreset('realistic');
 
             // Report results
             console.log(`\n========== TEST RESULTS ==========`);

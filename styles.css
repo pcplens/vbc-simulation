@@ -940,15 +940,12 @@
             cursor: help;
             margin-left: 4px;
             vertical-align: middle;
+            animation: tooltipPulse 2s ease-in-out 3;
         }
 
         @keyframes tooltipPulse {
             0%, 100% { transform: scale(1); box-shadow: none; }
             50% { transform: scale(1.3); box-shadow: 0 0 6px rgba(59, 130, 246, 0.5); }
-        }
-
-        .tooltip-icon {
-            animation: tooltipPulse 2s ease-in-out 3;
         }
 
         body.tooltip-seen .tooltip-icon {
@@ -2112,11 +2109,6 @@
             margin-bottom: 15px;
         }
 
-        .mc-tornado-canvas {
-            width: 100%;
-            height: 300px;
-        }
-
         /* HTML-based tornado chart styles */
         .tornado-header {
             display: flex;
@@ -2262,10 +2254,6 @@
                 height: 200px;
             }
 
-            .mc-tornado-canvas {
-                height: 250px;
-            }
-
             .mc-run-btn {
                 width: 100%;
                 justify-content: center;
@@ -2308,9 +2296,6 @@
             .container {
                 box-shadow: none;
                 border-radius: 0;
-            }
-            .page {
-                max-width: 100%;
             }
             .progress-bar, .progress-steps, .mobile-step-label,
             .button-group, .slider-group, .slider-row, .preset-buttons,
