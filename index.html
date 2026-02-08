@@ -3662,7 +3662,15 @@
                                 </div>
                             </div>
                             <div class="slider-row">
-                                <div class="slider-label">Variation Range (&#177;%)</div>
+                                <div class="slider-label">Variation Range (&#177;%)
+                                    <span class="tooltip-container">
+                                        <span class="tooltip-icon" tabindex="0" role="button">i</span>
+                                        <span class="tooltip-text">
+                                            Each variable varies within &#177;X% of its full slider range, centered on the
+                                            Base Scenario (Worst, Realistic, or Best Case) chosen above.
+                                        </span>
+                                    </span>
+                                </div>
                                 <div class="slider-container">
                                     <input type="range" id="mcVariation" min="10" max="100" step="5" value="50" oninput="updateMonteCarloSetting('variationPct', this.value)">
                                     <div class="slider-value">&#177;<span id="mcVariationDisplay">50</span>%</div>
