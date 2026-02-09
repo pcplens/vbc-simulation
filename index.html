@@ -2696,6 +2696,21 @@
                     </div>
                     <div class="slider-group-content">
                         <div class="slider-row">
+                            <label for="step5QualityGatePct" class="slider-label">
+                                Quality Gate Required
+                                <span class="tooltip-container">
+                                    <span class="tooltip-icon" tabindex="0" role="button">i</span>
+                                    <span class="tooltip-text">Minimum quality score required for any shared savings payout. If quality is below this threshold, payer keeps all savings even if TCOC is reduced.</span>
+                                </span>
+                            </label>
+                            <div class="slider-container">
+                                <input type="range" id="step5QualityGatePct" min="0" max="95" step="5" value="80"
+                                       oninput="updateAssumption('qualityGatePct', this.value)">
+                                <div class="slider-value"><span id="step5QualityGatePctDisplay">80</span>%</div>
+                            </div>
+                        </div>
+
+                        <div class="slider-row">
                             <label for="step5AcoStartingQualityPct" class="slider-label">
                                 Starting Quality Score
                             <span class="tooltip-container">

@@ -806,6 +806,7 @@
             } else {
                 regionalGrowthRate = regionalRafGrowthPct;
             }
+            regionalGrowthRate = Math.min(regionalGrowthRate, a.codingIntensityCap);
 
             return { acoGrowthRate, regionalGrowthRate };
         }
@@ -4204,6 +4205,7 @@
 
             // Quality Improvement slider displays
             ['acoStartingQualityPctDisplay', (m, a) => a.acoStartingQualityPct, String],
+            ['step5QualityGatePctDisplay', (m, a) => a.qualityGatePct, String],
             ['step5AcoStartingQualityPctDisplay', (m, a) => a.acoStartingQualityPct, String],
             ['acoQualityImprovementPctDisplay', (m, a) => a.acoQualityImprovementPct.toFixed(1), String],
             ['acoMaxQualityPctDisplay', (m, a) => a.acoMaxQualityPct, String],
@@ -5188,7 +5190,8 @@
                 ['step6RafOptimizationPeakYear', 'rafOptimizationPeakYear'],
                 ['step6RafOptimizationFloor', 'rafOptimizationFloor'],
                 ['step6CodingIntensityCap', 'codingIntensityCap'],
-                ['step5AcoStartingQualityPct', 'acoStartingQualityPct']
+                ['step5AcoStartingQualityPct', 'acoStartingQualityPct'],
+                ['step5QualityGatePct', 'qualityGatePct']
             ];
 
             sliders.forEach(key => {
