@@ -4,6 +4,10 @@ An interactive model exploring the costs, trade-offs, and funding realities of p
 
 **[Live Demo](https://vbcsim.pcplens.com/)**
 
+📖 **[Read the Written Guide](https://www.pcplens.com/p/vbc-financial-simulation-model)** — Full article explaining the model and its assumptions
+
+🎥 **[Watch the Video Walkthrough](https://youtu.be/35jZNE7-P7k)** — Screencast showing how to use each step of the simulation
+
 ## Screenshots
 
 | Setup & Configuration | Year 1 Outcomes | Monte Carlo Analysis |
