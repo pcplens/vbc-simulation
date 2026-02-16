@@ -322,7 +322,7 @@
             bankTermMonths: { min: 24, max: 60, step: 6 },
             bankOrigFee: { min: 0, max: 3, step: 0.5 },
             // Hospital-specific (Group 5)
-            hospitalReferralLock: { min: 30, max: 80, step: 5 },
+            hospitalReferralLock: { min: 10, max: 100, step: 5 },
             hospitalCostPremium: { min: 10, max: 40, step: 2 },
             hospitalGainShare: { min: 30, max: 70, step: 5 },
             hospitalReferralPct: { min: 20, max: 40, step: 2 },
@@ -358,7 +358,7 @@
         // Funder-specific variables should only be sampled/analyzed for the active funding model.
         const FUNDER_VARIABLES = {
             bank: ['bankInterestRate', 'bankTermMonths', 'bankOrigFee'],
-            hospital: ['hospitalReferralLock', 'hospitalCostPremium', 'hospitalGainShare', 'hospitalReferralPct', 'hospitalPremiumGrowthPct'],
+            hospital: ['hospitalGainShare', 'hospitalReferralPct', 'hospitalReferralLock', 'hospitalCostPremium', 'hospitalPremiumGrowthPct'],
             pe: ['peEquityShare', 'peBoardControl', 'peExitYears'],
             payer: ['payerPmpm', 'payerClawbackPct', 'payerPmpmRatchet']
         };
@@ -4295,6 +4295,12 @@
             ['payerClawbackPctDisplay', (m, a) => a.payerClawbackPct, String],
             ['payerPmpmRatchetDisplay', (m, a) => a.payerPmpmRatchet, String],
 
+            // Step 6 hospital slider displays
+            ['step6HospitalGainShareDisplay', (m, a) => a.hospitalGainShare, String],
+            ['step6HospitalReferralPctDisplay', (m, a) => a.hospitalReferralPct, String],
+            ['step6HospitalReferralLockDisplay', (m, a) => a.hospitalReferralLock, String],
+            ['step6HospitalCostPremiumDisplay', (m, a) => a.hospitalCostPremium, String],
+
             // Step 6 payer slider displays
             ['step6PayerPmpmDisplay', (m, a) => a.payerPmpm, String],
             ['step6PayerClawbackPctDisplay', (m, a) => a.payerClawbackPct, String],
@@ -5180,6 +5186,10 @@
 
             // Sliders where element ID differs from assumption key (Step 5/6 duplicates)
             const mappedSliders = [
+                ['step6HospitalGainShare', 'hospitalGainShare'],
+                ['step6HospitalReferralPct', 'hospitalReferralPct'],
+                ['step6HospitalReferralLock', 'hospitalReferralLock'],
+                ['step6HospitalCostPremium', 'hospitalCostPremium'],
                 ['step6PayerPmpm', 'payerPmpm'],
                 ['step6PayerClawbackPct', 'payerClawbackPct'],
                 ['step6PayerPmpmRatchet', 'payerPmpmRatchet'],
@@ -5334,10 +5344,10 @@
                     funderSpecificGroup.style.display = (selectedFunding === 'hospital' || selectedFunding === 'payer') ? 'block' : 'none';
                 }
 
-                // Show Hospital Premium Growth slider only for Hospital funding
-                const hospitalPremiumRow = document.getElementById('hospitalPremiumGrowthRow');
-                if (hospitalPremiumRow) {
-                    hospitalPremiumRow.style.display = selectedFunding === 'hospital' ? 'flex' : 'none';
+                // Show Hospital Parameters only for Hospital funding
+                const step6HospitalParams = document.getElementById('step6HospitalParams');
+                if (step6HospitalParams) {
+                    step6HospitalParams.style.display = selectedFunding === 'hospital' ? 'block' : 'none';
                 }
 
                 // Show Payer Parameters only for Payer funding
