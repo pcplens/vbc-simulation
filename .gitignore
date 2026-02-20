@@ -12,3 +12,5 @@
 !og-image.jpg
 !screenshots/
 !screenshots/*.png
+!js/
+!js/*.js
