@@ -609,53 +609,51 @@ export function updateMcFunderButtons(funder) {
     }
 }
 
+// Generate funder MC controls before tooltip setup
+generateFunderMcControls();
+
 // Prevent clicks inside funding params from triggering card selection
-document.addEventListener('DOMContentLoaded', function() {
-    // Generate funder MC controls before tooltip setup
-    generateFunderMcControls();
+document.querySelectorAll('.funding-params').forEach(params => {
+    params.addEventListener('click', (e) => e.stopPropagation());
+});
 
-    document.querySelectorAll('.funding-params').forEach(params => {
-        params.addEventListener('click', (e) => e.stopPropagation());
-    });
+// Make tooltip icons focusable and accessible on touch devices
+document.querySelectorAll('.tooltip-icon').forEach(icon => {
+    icon.setAttribute('tabindex', '0');
+    icon.setAttribute('role', 'button');
+    icon.setAttribute('aria-label', 'More info');
+});
 
-    // Make tooltip icons focusable and accessible on touch devices
-    document.querySelectorAll('.tooltip-icon').forEach(icon => {
-        icon.setAttribute('tabindex', '0');
-        icon.setAttribute('role', 'button');
-        icon.setAttribute('aria-label', 'More info');
-    });
+// Stop tooltip pulse after user engages or after 10 seconds
+function stopTooltipPulse() {
+    document.body.classList.add('tooltip-seen');
+}
+document.querySelectorAll('.tooltip-icon').forEach(icon => {
+    icon.addEventListener('mouseenter', stopTooltipPulse, { once: true });
+    icon.addEventListener('focus', stopTooltipPulse, { once: true });
+});
+setTimeout(stopTooltipPulse, 10000);
 
-    // Stop tooltip pulse after user engages or after 10 seconds
-    function stopTooltipPulse() {
-        document.body.classList.add('tooltip-seen');
-    }
-    document.querySelectorAll('.tooltip-icon').forEach(icon => {
-        icon.addEventListener('mouseenter', stopTooltipPulse, { once: true });
-        icon.addEventListener('focus', stopTooltipPulse, { once: true });
-    });
-    setTimeout(stopTooltipPulse, 10000);
-
-    // Toggle tooltip on touch/click for mobile devices
-    let activeTooltipIcon = null;
-    document.addEventListener('click', function(e) {
-        const icon = e.target.closest('.tooltip-icon');
-        if (icon) {
-            e.preventDefault();
-            if (activeTooltipIcon && activeTooltipIcon !== icon) {
-                activeTooltipIcon.blur();
-            }
-            if (activeTooltipIcon === icon) {
-                icon.blur();
-                activeTooltipIcon = null;
-            } else {
-                icon.focus();
-                activeTooltipIcon = icon;
-            }
-        } else if (activeTooltipIcon) {
+// Toggle tooltip on touch/click for mobile devices
+let activeTooltipIcon = null;
+document.addEventListener('click', function(e) {
+    const icon = e.target.closest('.tooltip-icon');
+    if (icon) {
+        e.preventDefault();
+        if (activeTooltipIcon && activeTooltipIcon !== icon) {
             activeTooltipIcon.blur();
-            activeTooltipIcon = null;
         }
-    });
+        if (activeTooltipIcon === icon) {
+            icon.blur();
+            activeTooltipIcon = null;
+        } else {
+            icon.focus();
+            activeTooltipIcon = icon;
+        }
+    } else if (activeTooltipIcon) {
+        activeTooltipIcon.blur();
+        activeTooltipIcon = null;
+    }
 });
 
 export function updateOutcomeDisplays() {
@@ -690,14 +688,17 @@ export function updateOutcomeDisplays() {
     // Update Monte Carlo funder-specific variables
     updateMonteCarloFunderVars();
 
-    // Auto-select scenario for hospital based on threshold
-    // If hospital premium causes MSR miss, auto-redirect to Missed Target
+    // Auto-select scenario based on funder
+    // Hospital: redirect to Missed Target if premium causes MSR miss
+    // Others: default to Hit Target
     if (state.selectedFunding === 'hospital' && m) {
         if (!m.hospitalMeetsThreshold) {
             showScenario('miss');  // Auto-redirect to Missed Target
         } else {
             showScenario('hit');   // Hospital can hit target with favorable terms
         }
+    } else {
+        showScenario('hit');
     }
 }
 

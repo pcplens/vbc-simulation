@@ -1015,8 +1015,8 @@
                                 <div class="slider-row">
                                     <label for="peBoardControl" class="slider-label">PE Board Control %</label>
                                     <div class="slider-container">
-                                        <input type="range" id="peBoardControl" min="40" max="70" step="5" value="51" oninput="updateAssumption('peBoardControl', this.value)">
-                                        <div class="slider-value"><span id="peBoardControlDisplay">51</span>%</div>
+                                        <input type="range" id="peBoardControl" min="40" max="70" step="5" value="50" oninput="updateAssumption('peBoardControl', this.value)">
+                                        <div class="slider-value"><span id="peBoardControlDisplay">50</span>%</div>
                                     </div>
                                 </div>
 
@@ -1999,7 +1999,7 @@
                                 </div>
 
                                 <p id="bankRealityCheckText" style="margin: 15px 0; line-height: 1.6; color: #166534;">
-                                    Each PCP <strong>gained $<span id="bankNetGainPerPcpText">104K</span></strong> after accounting for 18 months of lost clinic time and staff costs. But the ACO isn't debt-free yet—$<span id="bankOutstandingText">2.2M</span> in loan payments remain.
+                                    Each PCP <strong>gained $104K</strong> after accounting for 18 months of lost clinic time and staff costs. But the ACO isn't debt-free yet—$2.2M in loan payments remain.
                                 </p>
                             </div>
 
@@ -3693,10 +3693,9 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
 
-                        <!-- Group 8: Inflation Parameters -->
-                        <div class="mc-variable-group" id="mcGroupInflation">
+                            <!-- Group 8: Inflation Parameters -->
+                            <div class="mc-variable-group" id="mcGroupInflation">
                             <div class="mc-variable-group-header" onclick="toggleMcVariableGroup('mcGroupInflation')">
                                 <span class="mc-variable-group-title">Inflation</span>
                                 <span class="mc-variable-group-chevron">&#9660;</span>
@@ -3746,6 +3745,7 @@
                                 </div>
                             </div>
                         </div>
+                        </div>
 
                         <!-- Simulation Settings -->
                         <div class="mc-section">
@@ -3753,7 +3753,7 @@
                             <div class="slider-row" id="mcYearsToProjectRow" style="display: none;">
                                 <div class="slider-label">Years to Project</div>
                                 <div class="slider-container">
-                                    <input type="range" id="mcYearsToProject" min="1" max="20" step="1" value="10" oninput="monteCarloState.multiYearConfig.yearsToProject = parseInt(this.value); document.getElementById('mcYearsToProjectDisplay').textContent = this.value; monteCarloState.multiYearDirty = true;">
+                                    <input type="range" id="mcYearsToProject" min="1" max="20" step="1" value="10" oninput="updateMcYearsToProject(this.value)">
                                     <div class="slider-value"><span id="mcYearsToProjectDisplay">10</span> years</div>
                                 </div>
                             </div>
@@ -4108,6 +4108,12 @@
     </div>
     </div><!-- end .container -->
 
-    <script src="app.js"></script>
+    <script>
+      // ES modules require HTTP server (CORS blocks file://)
+      if (location.protocol === 'file:') {
+        document.write('<script src="app.js"><\/script>');
+      }
+    </script>
+    <script type="module" src="js/main.js"></script>
 </body>
 </html>

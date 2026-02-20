@@ -1294,47 +1294,6 @@
                 padding: 8px 15px;
             }
 
-            @media (max-width: 600px) {
-                .progress-steps {
-                    padding: 8px 10px;
-                }
-                .progress-step {
-                    font-size: 0;
-                    position: relative;
-                }
-                .progress-step::before {
-                    content: attr(data-step-num);
-                    display: inline-flex;
-                    align-items: center;
-                    justify-content: center;
-                    width: 24px;
-                    height: 24px;
-                    border-radius: 50%;
-                    background: #e5e7eb;
-                    color: #6b7280;
-                    font-size: 12px;
-                    font-weight: 600;
-                }
-                .progress-step.active::before {
-                    background: #3b82f6;
-                    color: white;
-                }
-                .progress-step.completed::before {
-                    background: #10b981;
-                    color: white;
-                }
-                .mobile-step-label {
-                    display: block;
-                    text-align: center;
-                    padding: 6px 0;
-                    font-size: 0.85em;
-                    font-weight: 600;
-                    color: #1e3a8a;
-                    background: #f9fafb;
-                    border-bottom: 1px solid #e5e7eb;
-                }
-            }
-
             .footer-content {
                 flex-direction: column;
                 text-align: center;
@@ -1390,6 +1349,46 @@
         }
 
         @media (max-width: 600px) {
+            /* Progress step circles (extracted from nested media query for browser compat) */
+            .progress-steps {
+                padding: 8px 10px;
+            }
+            .progress-step {
+                font-size: 0;
+                position: relative;
+            }
+            .progress-step::before {
+                content: attr(data-step-num);
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 24px;
+                height: 24px;
+                border-radius: 50%;
+                background: #e5e7eb;
+                color: #6b7280;
+                font-size: 12px;
+                font-weight: 600;
+            }
+            .progress-step.active::before {
+                background: #3b82f6;
+                color: white;
+            }
+            .progress-step.completed::before {
+                background: #10b981;
+                color: white;
+            }
+            .mobile-step-label {
+                display: block;
+                text-align: center;
+                padding: 6px 0;
+                font-size: 0.85em;
+                font-weight: 600;
+                color: #1e3a8a;
+                background: #f9fafb;
+                border-bottom: 1px solid #e5e7eb;
+            }
+
             /* Slider values */
             .slider-value {
                 flex: 0 0 70px;

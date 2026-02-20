@@ -10,7 +10,8 @@ Educational simulation for ACO financial trade-offs. No build tools or dependenc
 |------|----------|
 | `index.html` | HTML markup (~4,140 lines) |
 | `styles.css` | All CSS (~2,320 lines) |
-| `app.js` | All JavaScript (~6,490 lines) |
+| `js/` | ES modules (14 files, see Module Structure below) |
+| `app.js` | Legacy monolith (loaded as `file://` fallback when ES modules fail) |
 | `logo.png` | PCP Lens header logo |
 
 **Note:** Some browsers block external script/CSS loading from `file://`. Use a local server for testing: `python3 -m http.server` then open `http://localhost:8000`.
@@ -19,18 +20,69 @@ Educational simulation for ACO financial trade-offs. No build tools or dependenc
 
 ## Architecture
 
-### Code Organization
+### Module Structure
 
-HTML markup in `index.html`, styles in `styles.css`, all JavaScript in `app.js`. Key orchestration flow:
+JavaScript is split into ES modules under `js/`. Entry point: `<script type="module" src="js/main.js">`.
 
-- **Data layer:** `CONSTANTS`, `PRESETS` (worst/realistic/best), `SLIDER_RANGES`, `FUNDER_VARIABLES`, `DOM_BINDINGS` (~210 entries)
-- **Compute pipeline:** `computeModel(options)` orchestrates `computeCore()` → `computeInfrastructure()` → `computePracticeBurden()` → funder helpers (`computeBankLoan`, `computeHospital`, `computePayerAdvance`, `computePE`) → `computeRafAdjustment()` → `computeMultiYear()`
-- **Display:** `updateAllDisplays()` loops `DOM_BINDINGS` + complex conditional logic; `updateSliderValues()` syncs slider thumbs (includes mapped sliders where element ID differs from assumption key)
-- **Monte Carlo:** Year 1 (`runMonteCarloSimulation`) and Multi-Year (`runCascadingMonteCarlo`), both with Sobol QMC for better convergence; tornado charts (deterministic + Spearman correlation), funder-filtered variable keys via `getMonteCarloVariableKeys(funding)`
+| Module | Contents |
+|--------|----------|
+| `js/config.js` | `assumptions`, 3 presets, `CONSTANTS`, `SLIDER_RANGES`, `FUNDER_VARIABLES`, `FUNDING_CONFIG`, `MONTE_CARLO_CONFIG`, `PRESETS`, mutable `state` object, `DEFAULT_HOLD_CONSTANT`, `DEFAULT_VARY_ENABLED`, `monteCarloState` |
+| `js/sobol.js` | Sobol direction numbers + `sobolSequence()` generator |
+| `js/computeHelpers.js` | `computeQualityGate`, `computeRafGrowthRates`, `computeRafAdjustment`, `inflationMultiplier` |
+| `js/model.js` | `computeCore`, `computeInfrastructure`, `computePracticeBurden`, `amortize`, `computeBankLoan`, `computeHospital`, `computePE`, `computePayerAdvance`, `computeModel` |
+| `js/multiYear.js` | `computeHospitalPremiumForYear`, `computeYearFinancials`, `computeMultiYear` |
+| `js/mcSampling.js` | Sampling helpers, `computeMonteCarloIteration`, stats utilities, variable label/explanation maps |
+| `js/mcCharts.js` | `drawTornadoChart`, `drawCorrelationTornadoChart` |
+| `js/monteCarlo.js` | `runMonteCarloSimulation`, `displayMonteCarloResults`, `drawHistogram`, `runTornadoAnalysis`, MC UI controls, `generateFunderMcControls`, `resetMonteCarloDefaults`, `updateMonteCarloFunderVars` |
+| `js/multiYearMc.js` | `initializePathState`, `computeCascadingYearOutcome`, `updatePathState`, `runCascadingMonteCarlo`, multi-year MC display/charts/histograms, tornado + correlation analysis |
+| `js/formatters.js` | `formatNumber`, `formatCurrency`, `formatCurrencyFull`, `formatSignedCurrency`, `applyMcStatColor`, `setVisible` |
+| `js/domBindings.js` | `DOM_BINDINGS` array (~470 entries) |
+| `js/ui.js` | `updateAllDisplays`, `updateSliderValues`, `updateAssumption`, `applyPreset`, `showStep`, `selectFunding`, `showScenario`, navigation, `window.*` exposure for HTML event handlers |
+| `js/tests.js` | `captureBaseline`, `EXPECTED_VALUES`, `runTests` |
+| `js/main.js` | Bootstrap: imports all modules, calls `applyPreset('realistic')`, `updateProgress()` |
+
+### Dependency Graph (acyclic)
+
+```
+config ← (everything)
+sobol ← mcSampling
+computeHelpers ← model, multiYear, multiYearMc, mcSampling
+model ← mcSampling, multiYearMc, ui, tests
+multiYear ← model, multiYearMc, tests
+mcSampling ← monteCarlo, multiYearMc
+mcCharts ← monteCarlo, multiYearMc
+monteCarlo ← ui (imports from multiYearMc, NOT vice versa)
+multiYearMc ← monteCarlo, ui
+formatters ← mcCharts, monteCarlo, multiYearMc, domBindings, ui
+domBindings ← ui
+ui ← tests, main
+tests ← main
+```
+
+### Mutable State
+
+All mutable UI state lives in `state` object exported from `config.js`:
+```js
+export const state = {
+    currentStep, selectedFunding, activePreset, step5Initialized,
+    currentMultiYearView, currentMonteCarloView, currentMultiYearMonteCarloView,
+    currentMultiYearTornadoMode, currentYear1TornadoMode,
+    domBindingsCache, currentMcTab
+};
+```
+Modules import `state` and mutate properties directly (e.g., `state.selectedFunding = 'bank'`). The `assumptions` and `monteCarloState` objects are separate exports shared by reference.
+
+### Key Helper Functions
+
+- **`computeQualityGate(params, year)`** — Unified quality gate pass/fail for any year. Used by `computeMultiYear`, `computeCascadingYearOutcome`, `computeMonteCarloIteration`, and crossover scan. For Year 1, `(year-1)` terms zero out.
+- **`payerTrueNet`** — Consolidated payer net after underwater correction, computed in `computePayerAdvance`. Surfaced as `payerNetY1` and `payerNetPerPcp` in `computeModel` return. Eliminates scattered `payerNetDistributable - payerUnderwaterAmount` patterns.
+
+### Compute Pipeline
+`computeModel(options)` orchestrates `computeCore()` → `computeInfrastructure()` → `computePracticeBurden()` → funder helpers (`computeBankLoan`, `computeHospital`, `computePayerAdvance`, `computePE`) → `computeRafAdjustment()` → `computeMultiYear()`
 
 ### Reactive Model
 - Single `assumptions` object holds all input parameters (~50 sliders including RAF and quality)
-- `computeModel(options)` returns unified model object; multi-year projection is lazy (only computed when `currentStep >= 5` and `options.skipMultiYear` is not set)
+- `computeModel(options)` returns unified model object; multi-year projection is lazy (only computed when `state.currentStep >= 5` and `options.skipMultiYear` is not set)
 - Changes to any slider trigger full recalculation + UI update
 
 ### 7-Step Wizard Flow
@@ -139,23 +191,28 @@ All monetary negative signs use Unicode minus `−` (U+2212), not hyphen-minus `
 ```bash
 python3 -m http.server  # Required — file:// may block external scripts
 # Open http://localhost:8000 in browser, then in console:
-runTests()        # 317 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
+runTests()        # 318 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
 captureBaseline() # After intentional calculation changes
 ```
 
+### Playwright Browser Testing
+Playwright v1.58.2 is available via `npx playwright` and as MCP tools (`mcp__playwright__browser_*`). System Chrome at `/Applications/Google Chrome.app` — use `channel: 'chrome'` for direct scripts.
+
+Key MCP tools: `browser_navigate`, `browser_click`, `browser_snapshot`, `browser_take_screenshot`, `browser_run_code`, `browser_console_messages`.
+
 ### Adding New Assumptions
-1. Add to `assumptions` object
-2. Add to all three preset objects
-3. Add slider HTML + `oninput="updateAssumption('param', this.value)"`
-4. Add entry to `DOM_BINDINGS`
-5. Add slider ID to `updateSliderValues()` — use `sliders` array if element ID matches assumption key, or `mappedSliders` array if they differ
+1. Add to `assumptions` object in `js/config.js`
+2. Add to all three preset objects in `js/config.js`
+3. Add slider HTML in `index.html` + `oninput="updateAssumption('param', this.value)"`
+4. Add entry to `DOM_BINDINGS` in `js/domBindings.js`
+5. Add slider ID to `updateSliderValues()` in `js/ui.js` — use `sliders` array if element ID matches assumption key, or `mappedSliders` array if they differ
 
 ### Adding New Calculations
-1. Add to appropriate helper function
+1. Add to appropriate helper function in `js/model.js` (or `js/computeHelpers.js` for shared helpers)
 2. Include in helper's return object
-3. Destructure in `computeModel()` and include in return
-4. Add `<span id="newDisplay">` in HTML
-5. Add to `DOM_BINDINGS`
+3. Destructure in `computeModel()` in `js/model.js` and include in return
+4. Add `<span id="newDisplay">` in `index.html`
+5. Add to `DOM_BINDINGS` in `js/domBindings.js` (import any new formatters if needed)
 
 ## Common Gotchas
 

@@ -781,6 +781,20 @@
         // COMPUTE HELPERS - Domain-specific calculations
         // ============================================
 
+        // Compute quality gate pass/fail for a given year.
+        // For Year 1: (year-1) terms are 0, so gate = qualityGatePct, achieved = acoStartingQualityPct.
+        function computeQualityGate({ qualityGatePct, qualityGateRatchetPct, qualityGateCeiling,
+                                       acoStartingQualityPct, acoQualityImprovementPct, acoMaxQualityPct }, year) {
+            const ceiling = qualityGateCeiling ?? 95;
+            const qualityGateRequired = Math.min(ceiling, qualityGatePct + (year - 1) * qualityGateRatchetPct);
+            const rawAchievedQuality = acoStartingQualityPct + (year - 1) * acoQualityImprovementPct;
+            const achievedQuality = Math.min(100, acoMaxQualityPct, rawAchievedQuality);
+            const qualityPass = achievedQuality >= qualityGateRequired;
+            const qualityMargin = achievedQuality - qualityGateRequired;
+            const atQualityCeiling = rawAchievedQuality >= acoMaxQualityPct;
+            return { qualityGateRequired, rawAchievedQuality, achievedQuality, qualityPass, qualityMargin, atQualityCeiling };
+        }
+
         // Compute single-year RAF growth rates with saturation curve
         // Accepts growth rates as parameters so callers can pass shock-overridden values
         function computeRafGrowthRates(a, year, acoRafGrowthPct, regionalRafGrowthPct) {
@@ -978,6 +992,9 @@
             const payerIsUnderwater = acoShare < payerAnnualAdvance;
             const payerUnderwaterAmount = payerIsUnderwater ? (payerAnnualAdvance - acoShare) : 0;
 
+            // Net distributable after underwater correction
+            const payerTrueNet = payerNetDistributable - payerUnderwaterAmount;
+
             return {
                 payerMonthlyPmpm,
                 payerTotalAdvance18mo,
@@ -987,7 +1004,8 @@
                 payerClawbackAmount,
                 payerClawbackPerPcp,
                 payerIsUnderwater,
-                payerUnderwaterAmount
+                payerUnderwaterAmount,
+                payerTrueNet
             };
         }
 
@@ -1100,6 +1118,9 @@
             }
 
             // Payer advance / clawback
+            // Note: Multi-year payer logic is intentionally independent of computePayerAdvance().
+            // It uses year-specific currentPmpm (ratcheted) and different clawback logic for
+            // Year 1 (18mo) vs Years 2+ (12mo), so it cannot share the Year 1 helper.
             if (funding === 'payer') {
                 payerAdvanceAmount = currentPmpm * attributedPatients * 12;
                 if (acoShare > 0) {
@@ -1230,15 +1251,8 @@
                 }
 
                 // Quality gate ratchets annually, capped at qualityGateCeiling
-                const qualityGateCeiling = a.qualityGateCeiling ?? 95;
-                const qualityGateRequired = Math.min(qualityGateCeiling, a.qualityGatePct + (year - 1) * a.qualityGateRatchetPct);
-
-                // ACO's achieved quality: starts at baseline, improves annually, capped at max and 100%
-                const rawAchievedQuality = a.acoStartingQualityPct + (year - 1) * a.acoQualityImprovementPct;
-                const achievedQuality = Math.min(100, a.acoMaxQualityPct, rawAchievedQuality);
-                const qualityPass = achievedQuality >= qualityGateRequired;
-                const qualityMargin = achievedQuality - qualityGateRequired;
-                const atQualityCeiling = rawAchievedQuality >= a.acoMaxQualityPct;
+                const qg = computeQualityGate(a, year);
+                const { qualityGateRequired, achievedQuality, qualityPass, qualityMargin, atQualityCeiling } = qg;
 
                 // Track first quality miss
                 if (!qualityPass && !firstQualityMissYear) {
@@ -1380,11 +1394,9 @@
             const netAfterBurden = totalNet - totalBurden;
 
             // Calculate quality crossover year: when gate exceeds max achievable
-            // Must use qualityGateCeiling to match actual gate logic
-            const qualityGateCeilingVal = a.qualityGateCeiling ?? 95;
             let qualityCrossoverYear = null;
             for (let y = 1; y <= 20; y++) {
-                const gate = Math.min(qualityGateCeilingVal, a.qualityGatePct + (y - 1) * a.qualityGateRatchetPct);
+                const { qualityGateRequired: gate } = computeQualityGate(a, y);
                 if (gate > a.acoMaxQualityPct) {
                     qualityCrossoverYear = y;
                     break;
@@ -1548,7 +1560,7 @@
             let hitTarget = false;
 
             const practiceBurden18mo = model.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER;
-            const qualityPass = sampledAssumptions.acoStartingQualityPct >= sampledAssumptions.qualityGatePct;
+            const { qualityPass } = computeQualityGate(sampledAssumptions, 1);
 
             switch (funder) {
                 case 'bank':
@@ -1589,7 +1601,7 @@
                     if (hitTarget) {
                         sharedSavings = model.acoShare;
                         perPcpNet = sampledAssumptions.pcpCount > 0
-                            ? ((model.payerNetDistributable - model.payerUnderwaterAmount) / sampledAssumptions.pcpCount) - practiceBurden18mo
+                            ? model.payerNetPerPcp - practiceBurden18mo
                             : -practiceBurden18mo;
                     } else {
                         sharedSavings = 0;
@@ -2784,8 +2796,6 @@
                 reserve: 0,
                 acoRaf: initialAssumptions.acoBaseRaf,
                 regionalRaf: initialAssumptions.regionalBaseRaf,
-                qualityGate: initialAssumptions.qualityGatePct,
-                achievedQuality: initialAssumptions.acoStartingQualityPct,
                 loanPaymentsRemaining: funding === 'bank' ? initialAssumptions.bankTermMonths : 0,
                 bankDeferredMonthlyPayment: bankDeferredMonthlyPayment,
                 pmpm: initialAssumptions.payerPmpm,
@@ -2836,11 +2846,15 @@
             const rafAdjustedBenchmark = benchmark * rafRatio;
 
             // Quality dynamics (gate capped at qualityGateCeiling)
-            const qualityGateCeiling = a.qualityGateCeiling ?? 95;
-            const qualityGateRequired = Math.min(qualityGateCeiling, state.qualityGate + (year > 1 ? a.qualityGateRatchetPct : 0));
-            const rawAchievedQuality = state.achievedQuality + (year > 1 ? qualityImprovement : 0);
-            const achievedQuality = Math.min(100, a.acoMaxQualityPct, rawAchievedQuality);
-            const qualityPass = achievedQuality >= qualityGateRequired;
+            const qgParams = {
+                qualityGatePct: a.qualityGatePct,
+                qualityGateRatchetPct: a.qualityGateRatchetPct,
+                qualityGateCeiling: a.qualityGateCeiling,
+                acoStartingQualityPct: a.acoStartingQualityPct,
+                acoQualityImprovementPct: qualityImprovement,
+                acoMaxQualityPct: a.acoMaxQualityPct
+            };
+            const { qualityGateRequired, achievedQuality, qualityPass } = computeQualityGate(qgParams, year);
 
             // Cost floor and achievable savings
             const originalTcoc = attributedPatients * tcocPerPatient;
@@ -2984,8 +2998,6 @@
                 reserve: Math.max(0, newReserve),
                 acoRaf: yearResult.acoRaf,
                 regionalRaf: yearResult.regionalRaf,
-                qualityGate: yearResult.qualityGateRequired,
-                achievedQuality: yearResult.achievedQuality,
                 loanPaymentsRemaining: yearResult.loanPaymentsRemaining,
                 bankDeferredMonthlyPayment: state.bankDeferredMonthlyPayment,
                 pmpm: newPmpm,
@@ -4340,9 +4352,9 @@
             ['qPayerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['qPayerReserve', (m, a) => m.acoReserveFund, formatCurrency],
             ['qPayerAdvanceDeduction', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['qPayerNetToPcps', (m, a) => m.payerNetDistributable - m.payerUnderwaterAmount, formatCurrency],
+            ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrency],
             ['qPayerPcpCount', (m, a) => a.pcpCount, String],
-            ['qPayerPerPcp', (m, a) => (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount, formatCurrency],
+            ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrency],
             ['qPayerPayerSharePct', (m, a) => 100 - a.payerSharePct, String],
             ['qPayerPayerShare', (m, a) => m.targetSavings - m.acoShare, formatCurrency],
             ['qPayerAcoShareLost', (m, a) => m.acoShare, formatCurrency],
@@ -4362,10 +4374,10 @@
             ['payerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['payerReserveRetention', (m, a) => m.acoReserveFund, formatCurrency],
             ['payerAdvanceDeductionHit', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['payerNetHit', (m, a) => m.payerNetDistributable - m.payerUnderwaterAmount, formatCurrency],
+            ['payerNetHit', (m, a) => m.payerNetY1, formatCurrency],
             ['payerPcpCountHit', (m, a) => a.pcpCount, String],
-            ['payerPerPcpHit', (m, a) => (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount, formatCurrency],
-            ['payerPerPcpHitContext', (m, a) => (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount, formatCurrency],
+            ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrency],
+            ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrency],
             ['payerPracticeBurdenPerDoc', (m, a) => m.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER, formatCurrency],
             ['payerRatchetPctHit', (m, a) => a.payerPmpmRatchet, String],
             ['payerY1PmpmHit', (m, a) => a.payerPmpm, String],
@@ -4712,7 +4724,7 @@
             const payerAdv = computePayerAdvance(a, attributedPatients, acoShare, acoOperationalRetention, acoReserveFund);
             const { payerMonthlyPmpm, payerTotalAdvance18mo, payerAnnualAdvance, payerAdvanceDeduction,
                     payerNetDistributable, payerClawbackAmount, payerClawbackPerPcp,
-                    payerIsUnderwater, payerUnderwaterAmount } = payerAdv;
+                    payerIsUnderwater, payerUnderwaterAmount, payerTrueNet } = payerAdv;
 
             // Year 1 outcomes (if hit target) - all from net distributable
             // Bank: Uses bank-specific distributable (after loan retention)
@@ -4720,7 +4732,7 @@
             const bankNetY1 = bankNetDistributableShare;
             const hospitalNetY1 = hospitalNetDistributable - hospitalGainShareAmount;
             const peNetY1 = peNetToPcps;
-            const payerNetY1 = payerNetDistributable;
+            const payerNetY1 = payerTrueNet;
 
             // Missed target calculations
             const actualSavings1Pct = totalTcoc * CONSTANTS.MISS_SCENARIO_SAVINGS_PCT;
@@ -4866,7 +4878,7 @@
                 bankNetOutcome: (bankNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
                 hospitalNetOutcome: (hospitalNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
                 peNetOutcome: (peNetToPcps / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
-                payerNetOutcome: (payerNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
+                payerNetOutcome: a.pcpCount > 0 ? (payerNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER) : 0,
 
                 // Multi-year projections
                 multiYearHit
@@ -5069,7 +5081,7 @@
             );
 
             // Payer reality check
-            const payerPerPcpY1 = (m.payerNetDistributable - m.payerUnderwaterAmount) / a.pcpCount;
+            const payerPerPcpY1 = m.payerNetPerPcp;
             const payerNetGain = payerPerPcpY1 - practiceBurden18mo;
             const payerNetGainEl = document.getElementById('payerNetGainVsStatusQuo');
             if (payerNetGainEl) payerNetGainEl.textContent = payerNetGain >= 0 ? '$' + formatCurrency(payerNetGain) : '−$' + formatCurrency(Math.abs(payerNetGain));
@@ -5087,33 +5099,14 @@
 
             // ===== COMPARISON MATRIX - Highlighting & Color Classes =====
             // Highlight selected funder column
-            ['cmpBankHeader', 'cmpHospitalHeader', 'cmpPayerHeader', 'cmpPeHeader'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.remove('selected-funder');
+            ['bank', 'hospital', 'payer', 'pe'].forEach(f => {
+                const isSelected = selectedFunding === f;
+                const cap = f.charAt(0).toUpperCase() + f.slice(1);
+                ['Header', 'Miss', 'Quality', 'Hit'].forEach(suffix => {
+                    const el = document.getElementById('cmp' + cap + suffix);
+                    if (el) el.classList.toggle('selected-funder', isSelected);
+                });
             });
-            ['cmpBankMiss', 'cmpBankQuality', 'cmpBankHit'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.toggle('selected-funder', selectedFunding === 'bank');
-            });
-            ['cmpHospitalMiss', 'cmpHospitalQuality', 'cmpHospitalHit'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.toggle('selected-funder', selectedFunding === 'hospital');
-            });
-            ['cmpPayerMiss', 'cmpPayerQuality', 'cmpPayerHit'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.toggle('selected-funder', selectedFunding === 'payer');
-            });
-            ['cmpPeMiss', 'cmpPeQuality', 'cmpPeHit'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.classList.toggle('selected-funder', selectedFunding === 'pe');
-            });
-
-            // Also highlight header
-            const headerMap = { bank: 'cmpBankHeader', hospital: 'cmpHospitalHeader', payer: 'cmpPayerHeader', pe: 'cmpPeHeader' };
-            if (selectedFunding && headerMap[selectedFunding]) {
-                const headerEl = document.getElementById(headerMap[selectedFunding]);
-                if (headerEl) headerEl.classList.add('selected-funder');
-            }
 
             // Update comparison matrix color classes
             const comparisonCells = [
@@ -5139,25 +5132,13 @@
                 }
             });
 
-            // Sync Step 5 inflation checkboxes with assumptions
-            const step5Expenses = document.getElementById('applyInflationToExpenses');
-            if (step5Expenses) step5Expenses.checked = a.applyInflationToExpenses;
-            const step5Burden = document.getElementById('applyInflationToBurden');
-            if (step5Burden) step5Burden.checked = a.applyInflationToBurden;
-            const step5Benchmark = document.getElementById('applyInflationToBenchmark');
-            if (step5Benchmark) step5Benchmark.checked = a.applyInflationToBenchmark;
-            const step5Ratchet = document.getElementById('applyInflationToRatchet');
-            if (step5Ratchet) step5Ratchet.checked = a.applyInflationToRatchet;
-
-            // Sync MC inflation checkboxes with assumptions
-            const mcExpenses = document.getElementById('mcApplyInflationToExpenses');
-            if (mcExpenses) mcExpenses.checked = a.applyInflationToExpenses;
-            const mcBurden = document.getElementById('mcApplyInflationToBurden');
-            if (mcBurden) mcBurden.checked = a.applyInflationToBurden;
-            const mcBenchmark = document.getElementById('mcApplyInflationToBenchmark');
-            if (mcBenchmark) mcBenchmark.checked = a.applyInflationToBenchmark;
-            const mcRatchet = document.getElementById('mcApplyInflationToRatchet');
-            if (mcRatchet) mcRatchet.checked = a.applyInflationToRatchet;
+            // Sync Step 5 and MC inflation checkboxes with assumptions
+            ['Expenses', 'Burden', 'Benchmark', 'Ratchet'].forEach(name => {
+                ['applyInflationTo', 'mcApplyInflationTo'].forEach(prefix => {
+                    const el = document.getElementById(prefix + name);
+                    if (el) el.checked = a['applyInflationTo' + name];
+                });
+            });
 
             // Update slider values
             updateSliderValues();
@@ -6517,7 +6498,7 @@
             assertExact('payer underwater with high PMPM', mUnderwater.payerIsUnderwater, true);
             assertExact('payer underwater amount > 0', mUnderwater.payerUnderwaterAmount > 0, true);
             assertExact('payer underwater net reflects debt',
-                (mUnderwater.payerNetDistributable - mUnderwater.payerUnderwaterAmount) < 0, true);
+                mUnderwater.payerNetY1 < 0, true);
             Object.assign(assumptions, savedAssumptions2);
 
             // ---- Boundary Slider Value Tests ----
