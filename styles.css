@@ -112,6 +112,30 @@
             text-decoration: underline;
         }
 
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            margin-top: 8px;
+        }
+
+        .footer-social a {
+            color: #6b7280;
+            transition: color 0.2s ease;
+            display: inline-flex;
+            line-height: 0;
+        }
+
+        .footer-social a:hover {
+            color: #3b82f6;
+        }
+
+        .footer-social svg {
+            width: 24px;
+            height: 24px;
+            display: block;
+        }
+
         .progress-bar {
             background: #e5e7eb;
             height: 8px;
