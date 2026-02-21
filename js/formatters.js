@@ -41,6 +41,17 @@ export function formatSignedCurrency(num) {
     return num > 0 ? '+' + formatted : '\u2212' + formatted;
 }
 
+export function formatCurrencySigned(num) {
+    if (!isFinite(num)) return '$0';
+    const abs = Math.abs(num);
+    let formatted;
+    if (abs >= 1000000000) formatted = (abs / 1000000000).toFixed(1) + 'B';
+    else if (abs >= 1000000) formatted = (abs / 1000000).toFixed(1) + 'M';
+    else if (abs >= 1000) formatted = Math.round(abs / 1000) + 'K';
+    else formatted = Math.round(abs).toString();
+    return num < 0 ? '\u2212$' + formatted : '$' + formatted;
+}
+
 export function applyMcStatColor(valueElementId, numericValue) {
     const valueEl = document.getElementById(valueElementId);
     if (!valueEl) return;

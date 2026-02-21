@@ -5,7 +5,8 @@
 export function computeQualityGate({ qualityGatePct, qualityGateRatchetPct, qualityGateCeiling,
                                    acoStartingQualityPct, acoQualityImprovementPct, acoMaxQualityPct }, year) {
     const ceiling = qualityGateCeiling ?? 95;
-    const qualityGateRequired = Math.min(ceiling, qualityGatePct + (year - 1) * qualityGateRatchetPct);
+    const uncapped = qualityGatePct + (year - 1) * qualityGateRatchetPct;
+    const qualityGateRequired = Math.max(qualityGatePct, Math.min(ceiling, uncapped));
     const rawAchievedQuality = acoStartingQualityPct + (year - 1) * acoQualityImprovementPct;
     const achievedQuality = Math.min(100, acoMaxQualityPct, rawAchievedQuality);
     const qualityPass = achievedQuality >= qualityGateRequired;
@@ -70,4 +71,17 @@ export function computeRafAdjustment(a, year) {
 
 export function inflationMultiplier(inflationPct, year) {
     return Math.pow(1 + inflationPct / 100, year - 1);
+}
+
+export function computeMissLossPerPcp(funder, practiceBurden18mo, opts) {
+    switch (funder) {
+        case 'bank':
+            return -(practiceBurden18mo + (opts.capitalizedPrincipal / opts.pcpCount));
+        case 'payer':
+            return -(practiceBurden18mo + opts.payerClawbackPerPcp);
+        case 'hospital':
+        case 'pe':
+        default:
+            return -practiceBurden18mo;
+    }
 }

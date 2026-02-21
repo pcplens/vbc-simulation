@@ -1,4 +1,4 @@
-import { assumptions, state, monteCarloState, getMonteCarloVariableKeys, PRESETS } from './config.js';
+import { assumptions, state, monteCarloState, getMonteCarloVariableKeys, PRESETS, CONSTANTS } from './config.js';
 import { computeModel, amortize } from './model.js';
 import { computeMultiYear, computeYearFinancials } from './multiYear.js';
 import { computeQualityGate, computeRafAdjustment } from './computeHelpers.js';
@@ -404,6 +404,27 @@ export function runTests() {
     const growthY2toY3 = rafY3.acoRaf - computeRafAdjustment(assumptions, 2).acoRaf;
     const growthY4toY5 = rafY5.acoRaf - computeRafAdjustment(assumptions, 4).acoRaf;
     assertExact('raf saturation decay', growthY4toY5 < growthY2toY3, true);
+
+    // ---- Quality Gate Ceiling Floor Test ----
+    const qgCeil = computeQualityGate({ qualityGatePct: 80, qualityGateRatchetPct: 3,
+        qualityGateCeiling: 70, acoStartingQualityPct: 85,
+        acoQualityImprovementPct: 2, acoMaxQualityPct: 95 }, 1);
+    assertExact('quality gate ceiling does not lower Y1', qgCeil.qualityGateRequired, 80);
+
+    // Ceiling should still cap upward ratchet growth
+    const qgCeil2 = computeQualityGate({ qualityGatePct: 60, qualityGateRatchetPct: 5,
+        qualityGateCeiling: 70, acoStartingQualityPct: 85,
+        acoQualityImprovementPct: 2, acoMaxQualityPct: 95 }, 5);
+    assertExact('quality gate ceiling caps upward ratchet', qgCeil2.qualityGateRequired, 70);
+
+    // ---- MC Bank Miss Includes Loan Liability Test ----
+    const bankMissAssumptions = { ...PRESETS.worst, savingsTargetPct: 0.1, enableRafAdjustment: false };
+    const bankMissResult = computeMonteCarloIteration(bankMissAssumptions, { funding: 'bank' });
+    assertExact('mc bank miss hitTarget', bankMissResult.hitTarget, false);
+    // Bank miss should include loan liability (worse than just practice burden)
+    const bankMissModel = computeModel({ skipMultiYear: true });
+    const bankMissBurden = bankMissModel.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER;
+    assertExact('mc bank miss includes loan', bankMissResult.perPcpNet < -bankMissBurden, true);
 
     // ---- Preset Key Consistency Test ----
     const worstKeys = Object.keys(PRESETS.worst).sort();

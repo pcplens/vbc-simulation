@@ -196,7 +196,7 @@ captureBaseline() # After intentional calculation changes
 ```
 
 ### Playwright Browser Testing
-Playwright v1.58.2 is available via `npx playwright` and as MCP tools (`mcp__playwright__browser_*`). System Chrome at `/Applications/Google Chrome.app` — use `channel: 'chrome'` for direct scripts.
+**DO NOT install Playwright.** It is already available as an MCP server (`@playwright/mcp` v0.0.68). Use the `mcp__playwright__browser_*` MCP tools directly — do not run `npm install` or `npx playwright install`. System Chrome at `/Applications/Google Chrome.app`.
 
 Key MCP tools: `browser_navigate`, `browser_click`, `browser_snapshot`, `browser_take_screenshot`, `browser_run_code`, `browser_console_messages`.
 

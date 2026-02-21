@@ -1,4 +1,4 @@
-import { formatNumber, formatCurrency, formatCurrencyFull, formatSignedCurrency } from './formatters.js';
+import { formatNumber, formatCurrency, formatCurrencyFull, formatSignedCurrency, formatCurrencySigned } from './formatters.js';
 import { CONSTANTS } from './config.js';
 
 export const DOM_BINDINGS = [
@@ -160,9 +160,9 @@ export const DOM_BINDINGS = [
     ['qPayerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
     ['qPayerReserve', (m, a) => m.acoReserveFund, formatCurrency],
     ['qPayerAdvanceDeduction', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-    ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrency],
+    ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrencySigned],
     ['qPayerPcpCount', (m, a) => a.pcpCount, String],
-    ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrency],
+    ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
     ['qPayerPayerSharePct', (m, a) => 100 - a.payerSharePct, String],
     ['qPayerPayerShare', (m, a) => m.targetSavings - m.acoShare, formatCurrency],
     ['qPayerAcoShareLost', (m, a) => m.acoShare, formatCurrency],
@@ -182,10 +182,10 @@ export const DOM_BINDINGS = [
     ['payerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
     ['payerReserveRetention', (m, a) => m.acoReserveFund, formatCurrency],
     ['payerAdvanceDeductionHit', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-    ['payerNetHit', (m, a) => m.payerNetY1, formatCurrency],
+    ['payerNetHit', (m, a) => m.payerNetY1, formatCurrencySigned],
     ['payerPcpCountHit', (m, a) => a.pcpCount, String],
-    ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrency],
-    ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrency],
+    ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
+    ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
     ['payerPracticeBurdenPerDoc', (m, a) => m.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER, formatCurrency],
     ['payerRatchetPctHit', (m, a) => a.payerPmpmRatchet, String],
     ['payerY1PmpmHit', (m, a) => a.payerPmpm, String],

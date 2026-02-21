@@ -1,7 +1,7 @@
 import { SLIDER_RANGES, PRESETS, assumptions, state, monteCarloState, getMonteCarloVariableKeys, MONTE_CARLO_CONFIG, CONSTANTS } from './config.js';
 import { sobolSequence } from './sobol.js';
 import { computeModel } from './model.js';
-import { computeQualityGate } from './computeHelpers.js';
+import { computeQualityGate, computeMissLossPerPcp } from './computeHelpers.js';
 
 export function sampleTriangular(min, mode, max) {
     if (max <= min) return min;
@@ -145,7 +145,7 @@ export function computeMonteCarloIteration(sampledAssumptions, config) {
                     : -practiceBurden18mo;
             } else {
                 sharedSavings = 0;
-                perPcpNet = -practiceBurden18mo;
+                perPcpNet = computeMissLossPerPcp('bank', practiceBurden18mo, { capitalizedPrincipal: model.capitalizedPrincipal, pcpCount: sampledAssumptions.pcpCount });
             }
             break;
         case 'hospital':
@@ -155,7 +155,7 @@ export function computeMonteCarloIteration(sampledAssumptions, config) {
                 ? (sampledAssumptions.pcpCount > 0
                     ? (model.hospitalNetY1 / sampledAssumptions.pcpCount) - practiceBurden18mo
                     : -practiceBurden18mo)
-                : -practiceBurden18mo;
+                : computeMissLossPerPcp('hospital', practiceBurden18mo, {});
             break;
         case 'pe':
             hitTarget = (model.targetSavings >= model.msrThreshold) && qualityPass;
@@ -166,7 +166,7 @@ export function computeMonteCarloIteration(sampledAssumptions, config) {
                     : -practiceBurden18mo;
             } else {
                 sharedSavings = 0;
-                perPcpNet = -practiceBurden18mo;
+                perPcpNet = computeMissLossPerPcp('pe', practiceBurden18mo, {});
             }
             break;
         case 'payer':
@@ -178,7 +178,7 @@ export function computeMonteCarloIteration(sampledAssumptions, config) {
                     : -practiceBurden18mo;
             } else {
                 sharedSavings = 0;
-                perPcpNet = -(practiceBurden18mo + model.payerClawbackPerPcp);
+                perPcpNet = computeMissLossPerPcp('payer', practiceBurden18mo, { payerClawbackPerPcp: model.payerClawbackPerPcp });
             }
             break;
     }

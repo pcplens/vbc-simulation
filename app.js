@@ -786,7 +786,8 @@
         function computeQualityGate({ qualityGatePct, qualityGateRatchetPct, qualityGateCeiling,
                                        acoStartingQualityPct, acoQualityImprovementPct, acoMaxQualityPct }, year) {
             const ceiling = qualityGateCeiling ?? 95;
-            const qualityGateRequired = Math.min(ceiling, qualityGatePct + (year - 1) * qualityGateRatchetPct);
+            const uncapped = qualityGatePct + (year - 1) * qualityGateRatchetPct;
+            const qualityGateRequired = Math.max(qualityGatePct, Math.min(ceiling, uncapped));
             const rawAchievedQuality = acoStartingQualityPct + (year - 1) * acoQualityImprovementPct;
             const achievedQuality = Math.min(100, acoMaxQualityPct, rawAchievedQuality);
             const qualityPass = achievedQuality >= qualityGateRequired;
@@ -906,6 +907,19 @@
 
         function inflationMultiplier(inflationPct, year) {
             return Math.pow(1 + inflationPct / 100, year - 1);
+        }
+
+        function computeMissLossPerPcp(funder, practiceBurden18mo, opts) {
+            switch (funder) {
+                case 'bank':
+                    return -(practiceBurden18mo + (opts.capitalizedPrincipal / opts.pcpCount));
+                case 'payer':
+                    return -(practiceBurden18mo + opts.payerClawbackPerPcp);
+                case 'hospital':
+                case 'pe':
+                default:
+                    return -practiceBurden18mo;
+            }
         }
 
         function computeBankLoan(a, fundingNeeded, acoShare, acoOperationalRetention, acoReserveFund) {
@@ -1572,7 +1586,7 @@
                             : -practiceBurden18mo;
                     } else {
                         sharedSavings = 0;
-                        perPcpNet = -practiceBurden18mo;
+                        perPcpNet = computeMissLossPerPcp('bank', practiceBurden18mo, { capitalizedPrincipal: model.capitalizedPrincipal, pcpCount: sampledAssumptions.pcpCount });
                     }
                     break;
                 case 'hospital':
@@ -1582,7 +1596,7 @@
                         ? (sampledAssumptions.pcpCount > 0
                             ? (model.hospitalNetY1 / sampledAssumptions.pcpCount) - practiceBurden18mo
                             : -practiceBurden18mo)
-                        : -practiceBurden18mo;
+                        : computeMissLossPerPcp('hospital', practiceBurden18mo, {});
                     break;
                 case 'pe':
                     hitTarget = (model.targetSavings >= model.msrThreshold) && qualityPass;
@@ -1593,7 +1607,7 @@
                             : -practiceBurden18mo;
                     } else {
                         sharedSavings = 0;
-                        perPcpNet = -practiceBurden18mo;
+                        perPcpNet = computeMissLossPerPcp('pe', practiceBurden18mo, {});
                     }
                     break;
                 case 'payer':
@@ -1605,7 +1619,7 @@
                             : -practiceBurden18mo;
                     } else {
                         sharedSavings = 0;
-                        perPcpNet = -(practiceBurden18mo + model.payerClawbackPerPcp);
+                        perPcpNet = computeMissLossPerPcp('payer', practiceBurden18mo, { payerClawbackPerPcp: model.payerClawbackPerPcp });
                     }
                     break;
             }
@@ -4352,9 +4366,9 @@
             ['qPayerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['qPayerReserve', (m, a) => m.acoReserveFund, formatCurrency],
             ['qPayerAdvanceDeduction', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrency],
+            ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrencySigned],
             ['qPayerPcpCount', (m, a) => a.pcpCount, String],
-            ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrency],
+            ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
             ['qPayerPayerSharePct', (m, a) => 100 - a.payerSharePct, String],
             ['qPayerPayerShare', (m, a) => m.targetSavings - m.acoShare, formatCurrency],
             ['qPayerAcoShareLost', (m, a) => m.acoShare, formatCurrency],
@@ -4374,10 +4388,10 @@
             ['payerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['payerReserveRetention', (m, a) => m.acoReserveFund, formatCurrency],
             ['payerAdvanceDeductionHit', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['payerNetHit', (m, a) => m.payerNetY1, formatCurrency],
+            ['payerNetHit', (m, a) => m.payerNetY1, formatCurrencySigned],
             ['payerPcpCountHit', (m, a) => a.pcpCount, String],
-            ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrency],
-            ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrency],
+            ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
+            ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
             ['payerPracticeBurdenPerDoc', (m, a) => m.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER, formatCurrency],
             ['payerRatchetPctHit', (m, a) => a.payerPmpmRatchet, String],
             ['payerY1PmpmHit', (m, a) => a.payerPmpm, String],
@@ -4928,6 +4942,17 @@
             return num > 0 ? '+' + formatted : '−' + formatted;
         }
 
+        function formatCurrencySigned(num) {
+            if (!isFinite(num)) return '$0';
+            const abs = Math.abs(num);
+            let formatted;
+            if (abs >= 1000000000) formatted = (abs / 1000000000).toFixed(1) + 'B';
+            else if (abs >= 1000000) formatted = (abs / 1000000).toFixed(1) + 'M';
+            else if (abs >= 1000) formatted = Math.round(abs / 1000) + 'K';
+            else formatted = Math.round(abs).toString();
+            return num < 0 ? '\u2212$' + formatted : '$' + formatted;
+        }
+
         function applyMcStatColor(valueElementId, numericValue) {
             const valueEl = document.getElementById(valueElementId);
             if (!valueEl) return;
@@ -5096,6 +5121,18 @@
             if (payerUnderwaterWarning) {
                 payerUnderwaterWarning.style.display = m.payerIsUnderwater ? 'block' : 'none';
             }
+
+            // Conditional color for payer net displays (red when underwater/negative)
+            const payerNetColor = m.payerNetY1 >= 0 ? '#059669' : '#ef4444';
+            const payerPerPcpColor = m.payerNetPerPcp >= 0 ? '' : '#ef4444';
+            ['qPayerNetToPcpsWrap', 'payerNetHitWrap'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.color = payerNetColor;
+            });
+            ['payerPerPcpHit', 'qPayerPerPcp', 'payerPerPcpHitContext'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.color = payerPerPcpColor;
+            });
 
             // ===== COMPARISON MATRIX - Highlighting & Color Classes =====
             // Highlight selected funder column
@@ -5623,6 +5660,9 @@
         function updateOutcomeDisplays() {
             if (!selectedFunding) return;
 
+            // Restore quality banner state when navigating back from Step 5
+            updateQualityBannerVisibility();
+
             document.getElementById('selectedFunderOutcome').textContent = FUNDING_CONFIG[selectedFunding].shortName;
 
             // Show relevant funder outcomes (Year 2 is now in Step 6)
@@ -5701,6 +5741,25 @@
         }
 
         // ============================================
+        // Quality gate disabled note (gate = 0 means quality miss is impossible)
+        function updateQualityBannerVisibility() {
+            const qualityGateDisabledNote = document.getElementById('qualityGateDisabledNote');
+            const qualityMissBanner = document.querySelector('#scenario-quality .result-banner');
+            const qualityMissTldr = qualityMissBanner ? qualityMissBanner.nextElementSibling : null;
+            if (qualityGateDisabledNote) {
+                if (assumptions.qualityGatePct <= 0) {
+                    qualityGateDisabledNote.style.display = 'block';
+                    if (qualityMissBanner) qualityMissBanner.style.display = 'none';
+                    if (qualityMissTldr) qualityMissTldr.style.display = 'none';
+                } else {
+                    qualityGateDisabledNote.style.display = 'none';
+                    if (qualityMissBanner) qualityMissBanner.style.display = '';
+                    if (qualityMissTldr) qualityMissTldr.style.display = '';
+                }
+            }
+        }
+
+        // ============================================
         // MULTI-YEAR PROJECTION DISPLAY
         // ============================================
         function updateMultiYearDisplays(precomputedModel) {
@@ -5766,21 +5825,8 @@
                 }
             }
 
-            // Quality gate disabled note (gate = 0 means quality miss is impossible)
-            const qualityGateDisabledNote = document.getElementById('qualityGateDisabledNote');
-            const qualityMissBanner = document.querySelector('#scenario-quality .result-banner');
-            const qualityMissTldr = qualityMissBanner ? qualityMissBanner.nextElementSibling : null;
-            if (qualityGateDisabledNote) {
-                if (assumptions.qualityGatePct <= 0) {
-                    qualityGateDisabledNote.style.display = 'block';
-                    if (qualityMissBanner) qualityMissBanner.style.display = 'none';
-                    if (qualityMissTldr) qualityMissTldr.style.display = 'none';
-                } else {
-                    qualityGateDisabledNote.style.display = 'none';
-                    if (qualityMissBanner) qualityMissBanner.style.display = '';
-                    if (qualityMissTldr) qualityMissTldr.style.display = '';
-                }
-            }
+            // Quality gate disabled note
+            updateQualityBannerVisibility();
 
             // Conditional styling for Net After Burden card (green if positive, red if negative)
             const netAfterBurdenCard = document.getElementById('multiYearNetAfterBurdenCard');

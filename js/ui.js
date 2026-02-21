@@ -143,6 +143,18 @@ export function updateAllDisplays() {
         payerUnderwaterWarning.style.display = m.payerIsUnderwater ? 'block' : 'none';
     }
 
+    // Conditional color for payer net displays (red when underwater/negative)
+    const payerNetColor = m.payerNetY1 >= 0 ? '#059669' : '#ef4444';
+    const payerPerPcpColor = m.payerNetPerPcp >= 0 ? '' : '#ef4444';
+    ['qPayerNetToPcpsWrap', 'payerNetHitWrap'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.color = payerNetColor;
+    });
+    ['payerPerPcpHit', 'qPayerPerPcp', 'payerPerPcpHitContext'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.style.color = payerPerPcpColor;
+    });
+
     // ===== COMPARISON MATRIX - Highlighting & Color Classes =====
     // Highlight selected funder column
     ['bank', 'hospital', 'payer', 'pe'].forEach(f => {
@@ -659,6 +671,9 @@ document.addEventListener('click', function(e) {
 export function updateOutcomeDisplays() {
     if (!state.selectedFunding) return;
 
+    // Restore quality banner state when navigating back from Step 5
+    updateQualityBannerVisibility();
+
     document.getElementById('selectedFunderOutcome').textContent = FUNDING_CONFIG[state.selectedFunding].shortName;
 
     // Show relevant funder outcomes (Year 2 is now in Step 6)
@@ -736,6 +751,24 @@ export function showScenario(scenario) {
     }
 }
 
+// Quality gate disabled note (gate = 0 means quality miss is impossible)
+function updateQualityBannerVisibility() {
+    const qualityGateDisabledNote = document.getElementById('qualityGateDisabledNote');
+    const qualityMissBanner = document.querySelector('#scenario-quality .result-banner');
+    const qualityMissTldr = qualityMissBanner ? qualityMissBanner.nextElementSibling : null;
+    if (qualityGateDisabledNote) {
+        if (assumptions.qualityGatePct <= 0) {
+            qualityGateDisabledNote.style.display = 'block';
+            if (qualityMissBanner) qualityMissBanner.style.display = 'none';
+            if (qualityMissTldr) qualityMissTldr.style.display = 'none';
+        } else {
+            qualityGateDisabledNote.style.display = 'none';
+            if (qualityMissBanner) qualityMissBanner.style.display = '';
+            if (qualityMissTldr) qualityMissTldr.style.display = '';
+        }
+    }
+}
+
 export function updateMultiYearDisplays(precomputedModel) {
     const m = precomputedModel || computeModel();
     const data = m.multiYearHit;
@@ -799,21 +832,8 @@ export function updateMultiYearDisplays(precomputedModel) {
         }
     }
 
-    // Quality gate disabled note (gate = 0 means quality miss is impossible)
-    const qualityGateDisabledNote = document.getElementById('qualityGateDisabledNote');
-    const qualityMissBanner = document.querySelector('#scenario-quality .result-banner');
-    const qualityMissTldr = qualityMissBanner ? qualityMissBanner.nextElementSibling : null;
-    if (qualityGateDisabledNote) {
-        if (assumptions.qualityGatePct <= 0) {
-            qualityGateDisabledNote.style.display = 'block';
-            if (qualityMissBanner) qualityMissBanner.style.display = 'none';
-            if (qualityMissTldr) qualityMissTldr.style.display = 'none';
-        } else {
-            qualityGateDisabledNote.style.display = 'none';
-            if (qualityMissBanner) qualityMissBanner.style.display = '';
-            if (qualityMissTldr) qualityMissTldr.style.display = '';
-        }
-    }
+    // Quality gate disabled note
+    updateQualityBannerVisibility();
 
     // Conditional styling for Net After Burden card (green if positive, red if negative)
     const netAfterBurdenCard = document.getElementById('multiYearNetAfterBurdenCard');
