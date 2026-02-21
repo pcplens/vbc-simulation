@@ -31,11 +31,11 @@ JavaScript is split into ES modules under `js/`. Entry point: `<script type="mod
 | `js/computeHelpers.js` | `computeQualityGate`, `computeRafGrowthRates`, `computeRafAdjustment`, `inflationMultiplier` |
 | `js/model.js` | `computeCore`, `computeInfrastructure`, `computePracticeBurden`, `amortize`, `computeBankLoan`, `computeHospital`, `computePE`, `computePayerAdvance`, `computeModel` |
 | `js/multiYear.js` | `computeHospitalPremiumForYear`, `computeYearFinancials`, `computeMultiYear` |
-| `js/mcSampling.js` | Sampling helpers, `computeMonteCarloIteration`, stats utilities, variable label/explanation maps |
+| `js/mcSampling.js` | Sampling helpers, `computeMonteCarloIteration`, stats utilities (`computeMedian`, `computePercentile`, `computeStdDev`, `computeRanks`, `computeSpearmanCorrelation`), variable label/explanation maps |
 | `js/mcCharts.js` | `drawTornadoChart`, `drawCorrelationTornadoChart` |
 | `js/monteCarlo.js` | `runMonteCarloSimulation`, `displayMonteCarloResults`, `drawHistogram`, `runTornadoAnalysis`, MC UI controls, `generateFunderMcControls`, `resetMonteCarloDefaults`, `updateMonteCarloFunderVars` |
 | `js/multiYearMc.js` | `initializePathState`, `computeCascadingYearOutcome`, `updatePathState`, `runCascadingMonteCarlo`, multi-year MC display/charts/histograms, tornado + correlation analysis |
-| `js/formatters.js` | `formatNumber`, `formatCurrency`, `formatCurrencyFull`, `formatSignedCurrency`, `applyMcStatColor`, `setVisible` |
+| `js/formatters.js` | `formatNumber`, `formatCurrency`, `formatCurrencyFull`, `formatSignedCurrency`, `formatCurrencyNegatable`, `applyMcStatColor`, `setVisible` |
 | `js/domBindings.js` | `DOM_BINDINGS` array (~470 entries) |
 | `js/ui.js` | `updateAllDisplays`, `updateSliderValues`, `updateAssumption`, `applyPreset`, `showStep`, `selectFunding`, `showScenario`, navigation, `window.*` exposure for HTML event handlers |
 | `js/tests.js` | `captureBaseline`, `EXPECTED_VALUES`, `runTests` |
@@ -49,7 +49,7 @@ sobol ← mcSampling
 computeHelpers ← model, multiYear, multiYearMc, mcSampling
 model ← mcSampling, multiYearMc, ui, tests
 multiYear ← model, multiYearMc, tests
-mcSampling ← monteCarlo, multiYearMc
+mcSampling ← monteCarlo, multiYearMc, tests
 mcCharts ← monteCarlo, multiYearMc
 monteCarlo ← ui (imports from multiYearMc, NOT vice versa)
 multiYearMc ← monteCarlo, ui
@@ -191,7 +191,7 @@ All monetary negative signs use Unicode minus `−` (U+2212), not hyphen-minus `
 ```bash
 python3 -m http.server  # Required — file:// may block external scripts
 # Open http://localhost:8000 in browser, then in console:
-runTests()        # 318 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
+runTests()        # 328 assertions (3 presets + unit tests + multi-year + MC iteration + edge cases)
 captureBaseline() # After intentional calculation changes
 ```
 
