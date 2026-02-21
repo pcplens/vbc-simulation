@@ -4366,9 +4366,9 @@
             ['qPayerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['qPayerReserve', (m, a) => m.acoReserveFund, formatCurrency],
             ['qPayerAdvanceDeduction', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrencySigned],
+            ['qPayerNetToPcps', (m, a) => m.payerNetY1, formatCurrencyNegatable],
             ['qPayerPcpCount', (m, a) => a.pcpCount, String],
-            ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
+            ['qPayerPerPcp', (m, a) => m.payerNetPerPcp, formatCurrencyNegatable],
             ['qPayerPayerSharePct', (m, a) => 100 - a.payerSharePct, String],
             ['qPayerPayerShare', (m, a) => m.targetSavings - m.acoShare, formatCurrency],
             ['qPayerAcoShareLost', (m, a) => m.acoShare, formatCurrency],
@@ -4388,10 +4388,10 @@
             ['payerOpsRetention', (m, a) => m.acoOperationalRetention, formatCurrency],
             ['payerReserveRetention', (m, a) => m.acoReserveFund, formatCurrency],
             ['payerAdvanceDeductionHit', (m, a) => m.payerAdvanceDeduction, formatCurrency],
-            ['payerNetHit', (m, a) => m.payerNetY1, formatCurrencySigned],
+            ['payerNetHit', (m, a) => m.payerNetY1, formatCurrencyNegatable],
             ['payerPcpCountHit', (m, a) => a.pcpCount, String],
-            ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
-            ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrencySigned],
+            ['payerPerPcpHit', (m, a) => m.payerNetPerPcp, formatCurrencyNegatable],
+            ['payerPerPcpHitContext', (m, a) => m.payerNetPerPcp, formatCurrencyNegatable],
             ['payerPracticeBurdenPerDoc', (m, a) => m.practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER, formatCurrency],
             ['payerRatchetPctHit', (m, a) => a.payerPmpmRatchet, String],
             ['payerY1PmpmHit', (m, a) => a.payerPmpm, String],
@@ -4942,7 +4942,7 @@
             return num > 0 ? '+' + formatted : '−' + formatted;
         }
 
-        function formatCurrencySigned(num) {
+        function formatCurrencyNegatable(num) {
             if (!isFinite(num)) return '$0';
             const abs = Math.abs(num);
             let formatted;

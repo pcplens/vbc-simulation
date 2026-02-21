@@ -111,10 +111,13 @@ export function generateSampledAssumptions(config) {
 
 // Compute model for a single Monte Carlo iteration
 export function computeMonteCarloIteration(sampledAssumptions, config) {
+    // Clamp sampled pcpCount to prevent division by zero in miss path
+    if (sampledAssumptions.pcpCount < 1) sampledAssumptions.pcpCount = 1;
+
     // Temporarily replace global assumptions
     const originalAssumptions = { ...assumptions };
     Object.assign(assumptions, sampledAssumptions);
-    // Defensive guard: clamp pcpCount to prevent division by zero
+    // Defensive guard: clamp pcpCount (belt-and-suspenders with above)
     if (assumptions.pcpCount < 1) assumptions.pcpCount = 1;
 
     let model;
@@ -529,4 +532,42 @@ export function getVariableExplanation(varName) {
         }
     };
     return explanations[varName] || { lower: 'Reduces outcome', higher: 'Increases outcome' };
+}
+
+// Compute ranks for an array (1-based, average rank for ties)
+export function computeRanks(arr) {
+    const indexed = arr.map((v, i) => ({ v, i }));
+    indexed.sort((a, b) => a.v - b.v);
+    const ranks = new Array(arr.length);
+    let i = 0;
+    while (i < indexed.length) {
+        let j = i;
+        while (j < indexed.length && indexed[j].v === indexed[i].v) j++;
+        const avgRank = (i + j + 1) / 2; // average of 1-based ranks i+1..j
+        for (let k = i; k < j; k++) {
+            ranks[indexed[k].i] = avgRank;
+        }
+        i = j;
+    }
+    return ranks;
+}
+
+// Compute Spearman rank correlation between two arrays
+export function computeSpearmanCorrelation(x, y) {
+    const n = x.length;
+    if (n < 3) return 0;
+    const rx = computeRanks(x);
+    const ry = computeRanks(y);
+    const meanRx = rx.reduce((a, b) => a + b, 0) / n;
+    const meanRy = ry.reduce((a, b) => a + b, 0) / n;
+    let num = 0, denX = 0, denY = 0;
+    for (let i = 0; i < n; i++) {
+        const dx = rx[i] - meanRx;
+        const dy = ry[i] - meanRy;
+        num += dx * dy;
+        denX += dx * dx;
+        denY += dy * dy;
+    }
+    const den = Math.sqrt(denX * denY);
+    return den === 0 ? 0 : num / den;
 }

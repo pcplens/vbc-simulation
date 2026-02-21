@@ -259,6 +259,7 @@ export function displayMonteCarloResults(config) {
 // Draw histogram on canvas
 export function drawHistogram(stats) {
     const canvas = document.getElementById('mcHistogramCanvas');
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
 
     // Set canvas size with device pixel ratio for crisp rendering
@@ -440,10 +441,10 @@ export function updateMonteCarloSetting(setting, value) {
             label.textContent = value ? 'Realistic clustering' : 'Uniform spread';
         }
     } else {
-        monteCarloState[setting] = parseInt(value);
+        monteCarloState[setting] = parseInt(value, 10);
 
         if (setting === 'iterations') {
-            document.getElementById('mcIterationsDisplay').textContent = parseInt(value).toLocaleString();
+            document.getElementById('mcIterationsDisplay').textContent = parseInt(value, 10).toLocaleString();
         } else if (setting === 'variationPct') {
             document.getElementById('mcVariationDisplay').textContent = value;
         }

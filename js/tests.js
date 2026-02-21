@@ -5,7 +5,7 @@ import { computeQualityGate, computeRafAdjustment } from './computeHelpers.js';
 import { generateSampledAssumptions, computeMonteCarloIteration, computeMedian, computePercentile, computeStdDev } from './mcSampling.js';
 import { applyPreset, showMonteCarloTab } from './ui.js';
 import { formatCurrency, formatCurrencyFull, formatSignedCurrency } from './formatters.js';
-import { computeRanks, computeSpearmanCorrelation } from './multiYearMc.js';
+import { computeRanks, computeSpearmanCorrelation } from './mcSampling.js';
 
 // Key fields to test - covers all major calculation domains
 const TEST_FIELDS = [

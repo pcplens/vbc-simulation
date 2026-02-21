@@ -41,7 +41,7 @@ export function formatSignedCurrency(num) {
     return num > 0 ? '+' + formatted : '\u2212' + formatted;
 }
 
-export function formatCurrencySigned(num) {
+export function formatCurrencyNegatable(num) {
     if (!isFinite(num)) return '$0';
     const abs = Math.abs(num);
     let formatted;

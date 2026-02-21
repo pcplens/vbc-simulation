@@ -2,7 +2,7 @@ import { assumptions, CONSTANTS, state, monteCarloState, PRESETS, MONTE_CARLO_CO
 import { computeQualityGate, computeRafGrowthRates, inflationMultiplier } from './computeHelpers.js';
 import { computeHospitalPremiumForYear, computeYearFinancials } from './multiYear.js';
 import { computePracticeBurden, amortize } from './model.js';
-import { generateSampledAssumptions, getVariationBounds, getVariableLabel, computeMedian, computePercentile, computeStdDev } from './mcSampling.js';
+import { generateSampledAssumptions, getVariationBounds, getVariableLabel, computeMedian, computePercentile, computeStdDev, computeRanks, computeSpearmanCorrelation } from './mcSampling.js';
 import { sobolSequence } from './sobol.js';
 import { drawTornadoChart, drawCorrelationTornadoChart } from './mcCharts.js';
 import { formatSignedCurrency, formatCurrency, applyMcStatColor } from './formatters.js';
@@ -337,44 +337,6 @@ export function runMultiYearTornadoAnalysis() {
     return sensitivities.slice(0, 10);
 }
 
-// Compute ranks for an array (1-based, average rank for ties)
-export function computeRanks(arr) {
-    const indexed = arr.map((v, i) => ({ v, i }));
-    indexed.sort((a, b) => a.v - b.v);
-    const ranks = new Array(arr.length);
-    let i = 0;
-    while (i < indexed.length) {
-        let j = i;
-        while (j < indexed.length && indexed[j].v === indexed[i].v) j++;
-        const avgRank = (i + j + 1) / 2; // average of 1-based ranks i+1..j
-        for (let k = i; k < j; k++) {
-            ranks[indexed[k].i] = avgRank;
-        }
-        i = j;
-    }
-    return ranks;
-}
-
-// Compute Spearman rank correlation between two arrays
-export function computeSpearmanCorrelation(x, y) {
-    const n = x.length;
-    if (n < 3) return 0;
-    const rx = computeRanks(x);
-    const ry = computeRanks(y);
-    const meanRx = rx.reduce((a, b) => a + b, 0) / n;
-    const meanRy = ry.reduce((a, b) => a + b, 0) / n;
-    let num = 0, denX = 0, denY = 0;
-    for (let i = 0; i < n; i++) {
-        const dx = rx[i] - meanRx;
-        const dy = ry[i] - meanRy;
-        num += dx * dy;
-        denX += dx * dx;
-        denY += dy * dy;
-    }
-    const den = Math.sqrt(denX * denY);
-    return den === 0 ? 0 : num / den;
-}
-
 // Analyze correlations between sampled parameters and Year 1 outcomes
 export function analyzeYear1Correlations(results) {
     if (!results || results.length < 10) return [];
@@ -384,6 +346,12 @@ export function analyzeYear1Correlations(results) {
     const funding = state.selectedFunding || 'bank';
 
     let correlations = [];
+
+    // Dynamic significance threshold: max(0.10, ~p<0.01 critical value)
+    // Eliminates spurious noise correlations that produce misleading bar colors
+    // For n=1000: max(0.10, 0.081) = 0.10
+    // For n=100:  max(0.10, 0.259) = 0.259
+    const significanceThreshold = Math.max(0.10, 2.576 / Math.sqrt(results.length));
 
     getMonteCarloVariableKeys(funding, 'year1').forEach(varName => {
         const isHeld = monteCarloState.holdConstant[varName];
@@ -397,12 +365,6 @@ export function analyzeYear1Correlations(results) {
 
             const correlation = computeSpearmanCorrelation(values, outcomes);
             const absCorrelation = Math.abs(correlation);
-
-            // Dynamic significance threshold: max(0.10, ~p<0.01 critical value)
-            // Eliminates spurious noise correlations that produce misleading bar colors
-            // For n=1000: max(0.10, 0.081) = 0.10
-            // For n=100:  max(0.10, 0.259) = 0.259
-            const significanceThreshold = Math.max(0.10, 2.576 / Math.sqrt(results.length));
 
             if (absCorrelation >= significanceThreshold) {
                 correlations.push({
@@ -429,6 +391,10 @@ export function analyzeMultiYearCorrelations(paths) {
 
     let correlations = [];
 
+    // Dynamic significance threshold: max(0.10, ~p<0.01 critical value)
+    // Eliminates spurious noise correlations that produce misleading bar colors
+    const significanceThreshold = Math.max(0.10, 2.576 / Math.sqrt(paths.length));
+
     // For each varied variable, extract initial sampled values
     getMonteCarloVariableKeys(funding, 'multiYear').forEach(varName => {
         const isHeld = monteCarloState.holdConstant[varName];
@@ -444,10 +410,6 @@ export function analyzeMultiYearCorrelations(paths) {
 
             const correlation = computeSpearmanCorrelation(values, outcomes);
             const absCorrelation = Math.abs(correlation);
-
-            // Dynamic significance threshold: max(0.10, ~p<0.01 critical value)
-            // Eliminates spurious noise correlations that produce misleading bar colors
-            const significanceThreshold = Math.max(0.10, 2.576 / Math.sqrt(paths.length));
 
             if (absCorrelation >= significanceThreshold) {
                 correlations.push({
@@ -589,21 +551,10 @@ export async function runCascadingMonteCarlo() {
                 // Bug #8 fix: Pass funding and initialAssumptions for PMPM ratchet
                 pathState = updatePathState(pathState, yearResult, year, funding, initialAssumptions);
 
+                // Only store fields consumed by analyzeMultiYearPaths (fan chart, heatmap)
                 pathHistory.push({
-                    year,
-                    benchmark: yearResult.rafAdjustedBenchmark,
-                    rafRatio: yearResult.rafRatio,
-                    savingsPct: yearResult.savingsPct,
-                    acoShare: yearResult.acoShare,
-                    netToPcps: yearResult.netToPcps,
-                    reserve: pathState.reserve,
                     status: yearResult.status,
-                    qualityPass: yearResult.qualityPass,
-                    cumulativeNet: pathState.cumulativeNet,
                     cumulativeSharedSavings: pathState.cumulativeSharedSavings,
-                    cumulativePerPcpNet: pathState.cumulativePerPcpNet,
-                    // Bug #10 fix: Track after-burden cumulative for fan chart
-                    // Clawback now embedded in netToPcps → cumulativePerPcpNet
                     cumulativePerPcpNetAfterBurden: pathState.cumulativePerPcpNet - pathState.cumulativePerPcpBurden
                 });
             }
@@ -744,7 +695,7 @@ export function analyzeMultiYearPaths(paths, years, viewType = 'perPcp') {
     // Build histogram bins
     const min = sortedFinal[0];
     const max = sortedFinal[sortedFinal.length - 1];
-    const binCount = 25;
+    const binCount = MONTE_CARLO_CONFIG.histogramBins;
     const bins = [];
     if (max === min) {
         // All values identical — single bin (matches Year 1 MC degenerate handling)

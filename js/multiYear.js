@@ -209,9 +209,8 @@ export function computeMultiYear(baseModel, fundingType) {
 
     // Payer-specific: track PMPM with annual ratchet
     let currentPmpm = (fundingType === 'payer') ? a.payerPmpm : 0;
-    // Use attributed patients for PMPM calculations
-    const totalPanelPatients = a.pcpCount * a.patientsPerPcp;
-    const attributedPatients = Math.round(totalPanelPatients * (a.attributionPct / 100));
+    // Use attributed patients from base model (already computed in computeModel)
+    const attributedPatients = baseModel.attributedPatients;
 
     const rows = [];
     let totalNet = 0;

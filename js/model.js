@@ -182,7 +182,7 @@ export function computeModel(options) {
     const acoMonthlyBurn = acoInfrastructureTotal / 12;
     const acoFundingNeeded = acoMonthlyBurn * CONSTANTS.DEFERRAL_MONTHS;
 
-    // Total investment and funding
+    // Combined display metric: ACO infrastructure + practice self-funded burden (all stakeholders)
     const totalInvestment18mo = acoFundingNeeded + (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER * a.pcpCount);
     const fundingNeeded = acoFundingNeeded;
 
@@ -224,6 +224,9 @@ export function computeModel(options) {
     const peNetY1 = peNetToPcps;
     const payerNetY1 = payerTrueNet;
 
+    // Practice burden for 18-month reconciliation period (computed once, reused below)
+    const practiceBurden18mo = practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER;
+
     // Missed target calculations
     const actualSavings1Pct = totalTcoc * CONSTANTS.MISS_SCENARIO_SAVINGS_PCT;
 
@@ -232,6 +235,7 @@ export function computeModel(options) {
     if (state.currentStep >= 5 && !(options && options.skipMultiYear)) {
         const baseModelForMultiYear = {
             totalTcoc,
+            attributedPatients,
             deferredMonthlyPayment,
             acoInfrastructureTotal,
             practiceBurdenPerPcp
@@ -356,7 +360,7 @@ export function computeModel(options) {
         actualSavings1Pct,
 
         // Practice burden for 18 months (reconciliation period)
-        practiceBurden18mo: practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER,
+        practiceBurden18mo,
 
         // Per PCP amounts for hit scenarios
         bankNetPerPcp: bankNetY1 / a.pcpCount,
@@ -365,10 +369,10 @@ export function computeModel(options) {
         payerNetPerPcp: payerNetY1 / a.pcpCount,
 
         // Net outcomes after burden (for conditional styling in hit scenarios)
-        bankNetOutcome: (bankNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
-        hospitalNetOutcome: (hospitalNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
-        peNetOutcome: (peNetToPcps / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER),
-        payerNetOutcome: a.pcpCount > 0 ? (payerNetY1 / a.pcpCount) - (practiceBurdenPerPcp * CONSTANTS.BURDEN_18MO_MULTIPLIER) : 0,
+        bankNetOutcome: (bankNetY1 / a.pcpCount) - practiceBurden18mo,
+        hospitalNetOutcome: (hospitalNetY1 / a.pcpCount) - practiceBurden18mo,
+        peNetOutcome: (peNetToPcps / a.pcpCount) - practiceBurden18mo,
+        payerNetOutcome: a.pcpCount > 0 ? (payerNetY1 / a.pcpCount) - practiceBurden18mo : 0,
 
         // Multi-year projections
         multiYearHit

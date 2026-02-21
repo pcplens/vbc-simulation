@@ -24,6 +24,10 @@ export function updateAllDisplays() {
         }
     });
 
+    // Keep quality banner in sync on every update (cheap check — prevents stale state
+    // when qualityGatePct changes while already on Step 4)
+    updateQualityBannerVisibility();
+
     // RAF Adjustment Lines visibility (show when enabled and ratio differs from 1.0)
     const rafAdjustmentLine = document.getElementById('rafAdjustmentLine');
     const adjustedBenchmarkLine = document.getElementById('adjustedBenchmarkLine');
@@ -1026,7 +1030,7 @@ export function toggleComparison() {
 }
 
 export function updateMcYearsToProject(value) {
-    monteCarloState.multiYearConfig.yearsToProject = parseInt(value);
+    monteCarloState.multiYearConfig.yearsToProject = parseInt(value, 10);
     document.getElementById('mcYearsToProjectDisplay').textContent = value;
     monteCarloState.multiYearDirty = true;
 }
