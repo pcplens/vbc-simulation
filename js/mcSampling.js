@@ -555,7 +555,7 @@ export function computeRanks(arr) {
 // Compute Spearman rank correlation between two arrays
 export function computeSpearmanCorrelation(x, y) {
     const n = x.length;
-    if (n < 3) return 0;
+    if (n < 3 || y.length !== n) return 0;
     const rx = computeRanks(x);
     const ry = computeRanks(y);
     const meanRx = rx.reduce((a, b) => a + b, 0) / n;

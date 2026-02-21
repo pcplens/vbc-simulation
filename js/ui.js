@@ -38,7 +38,7 @@ export function updateAllDisplays() {
     // Color the RAF ratio based on whether it's favorable or unfavorable
     const rafRatioContainer = document.getElementById('rafRatioCalcContainer');
     if (rafRatioContainer) {
-        rafRatioContainer.style.color = m.rafRatio >= 1.0 ? '#10b981' : '#ef4444';
+        rafRatioContainer.style.color = m.rafRatio >= 1.0 ? '#10b981' : '#f87171';
     }
 
     // Sync RAF saturation checkbox (not handled by updateSliderValues)

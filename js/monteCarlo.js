@@ -819,11 +819,9 @@ export function updateMonteCarloFunderVars() {
     const funder = state.selectedFunding || null;
 
     // Hide all funder variable groups
-    document.getElementById('mcBankVars').style.display = 'none';
-    document.getElementById('mcHospitalVars').style.display = 'none';
-    document.getElementById('mcPeVars').style.display = 'none';
-    document.getElementById('mcPayerVars').style.display = 'none';
-    document.getElementById('mcNoFunderSelected').style.display = 'none';
+    ['mcBankVars', 'mcHospitalVars', 'mcPeVars', 'mcPayerVars', 'mcNoFunderSelected'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.style.display = 'none';
+    });
 
     // Show appropriate group
     if (funder === 'bank') {

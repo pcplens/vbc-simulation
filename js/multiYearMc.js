@@ -961,7 +961,7 @@ export function drawFanChart(yearStats, viewType = 'perPcp') {
         } else {
             formatted = '$' + Math.round(abs);
         }
-        return val < 0 ? '-' + formatted : formatted;
+        return val < 0 ? '\u2212' + formatted : formatted;
     };
     ctx.fillText(formatAxisLabel(maxY), padding.left - 5, padding.top + 10);
     ctx.fillText(formatAxisLabel(minY), padding.left - 5, padding.top + chartHeight);
